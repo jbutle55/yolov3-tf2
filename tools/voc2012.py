@@ -13,7 +13,7 @@ flags.DEFINE_string('data_dir', './data/voc2012_raw/VOCdevkit/VOC2012/',
 flags.DEFINE_enum('split', 'train', [
                   'train', 'val'], 'specify train or val spit')
 flags.DEFINE_string('output_file', './data/voc2012_train.tfrecord', 'outpot dataset')
-flags.DEFINE_string('classes', './data/voc2012.names', 'classes file')
+flags.DEFINE_string('classes', '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names', 'classes file')
 
 
 def build_example(annotation, class_map):
@@ -36,8 +36,8 @@ def build_example(annotation, class_map):
     difficult_obj = []
     if 'object' in annotation:
         for obj in annotation['object']:
-            difficult = bool(int(obj['difficult']))
-            difficult_obj.append(int(difficult))
+            #difficult = bool(int(obj['difficult']))
+            #difficult_obj.append(int(difficult))
 
             xmin.append(float(obj['bndbox']['xmin']) / width)
             ymin.append(float(obj['bndbox']['ymin']) / height)
@@ -45,8 +45,8 @@ def build_example(annotation, class_map):
             ymax.append(float(obj['bndbox']['ymax']) / height)
             classes_text.append(obj['name'].encode('utf8'))
             classes.append(class_map[obj['name']])
-            truncated.append(int(obj['truncated']))
-            views.append(obj['pose'].encode('utf8'))
+            #truncated.append(int(obj['truncated']))
+            #views.append(obj['pose'].encode('utf8'))
 
     example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': tf.train.Feature(int64_list=tf.train.Int64List(value=[height])),
@@ -92,19 +92,18 @@ def main(_argv):
     logging.info("Class mapping loaded: %s", class_map)
 
     writer = tf.io.TFRecordWriter(FLAGS.output_file)
-    image_list = open(os.path.join(
-        FLAGS.data_dir, 'ImageSets', 'Main', 'aeroplane_%s.txt' % FLAGS.split)).read().splitlines()
+    image_list = open(os.path.join(FLAGS.data_dir, 'img_set.txt')).read().splitlines()
     logging.info("Image list loaded: %d", len(image_list))
     for image in tqdm.tqdm(image_list):
-        name, _ = image.split()
-        annotation_xml = os.path.join(
-            FLAGS.data_dir, 'Annotations', name + '.xml')
+        #name, _ = image.split()
+        name = image
+        annotation_xml = os.path.join(FLAGS.data_dir, 'Annotations', name + '.xml')
         annotation_xml = lxml.etree.fromstring(open(annotation_xml).read())
         annotation = parse_xml(annotation_xml)['annotation']
         tf_example = build_example(annotation, class_map)
         writer.write(tf_example.SerializeToString())
     writer.close()
-    logging.info("Done")
+    logging.info("\nDone\n")
 
 
 if __name__ == '__main__':

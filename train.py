@@ -6,11 +6,11 @@ from yolov3_tf2.models import YoloV3, YoloV3Tiny, YoloLoss, yolo_anchors, yolo_a
 from yolov3_tf2.utils import freeze_all
 import yolov3_tf2.dataset as dataset
 
-train_path = '/Users/justinbutler/Desktop/school/Calgary/Thesis Work/ML_Testing/yolov3-tf2/train/JPEGImages/*.jpg'
-valid_path = '/Users/justinbutler/Desktop/school/Calgary/Thesis Work/ML_Testing/yolov3-tf2/data/voc2012_train.tfrecord'
-weights_path = './checkpoints/yolov3.weights'
-classes = '/Users/justinbutler/Desktop/school/Calgary/Thesis Work/ML_Testing/yolov3-tf2/data/voc2012.names'  # Path to text? file containing all classes, 1 per line
-mode = 'eager_tf'  # Can be 'fit', 'eager_fit', 'eager_tf'
+train_path = '/Users/justinbutler/Desktop/test/output.tfrecord'
+valid_path = '//Users/justinbutler/Desktop/test/output.tfrecord'
+weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf'
+classes = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names'  # Path to text? file containing all classes, 1 per line
+mode = 'fit'  # Can be 'fit', 'eager_fit', 'eager_tf'
 '''
 'fit: model.fit, '
 'eager_fit: model.fit(run_eagerly=True), '
