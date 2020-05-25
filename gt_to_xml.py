@@ -5,17 +5,10 @@ import xml.etree.ElementTree as ET
 import re
 from xml.dom import minidom
 import cv2
-from tools.voc2012 import parse_xml, build_example
-import time
-import os
-import hashlib
 
-from absl import app, flags, logging
-from absl.flags import FLAGS
-import tensorflow as tf
-import lxml.etree
-import tqdm
-
+'''
+For parsing ground truth files from the large UAVDT dataset. (https://sites.google.com/site/daviddo0323/projects/uavdt)
+'''
 
 def main(args):
     print('Parsing GT file.')
@@ -75,33 +68,6 @@ def main(args):
         f.close()
 
     print('Done Parsing Ground Truth')
-
-    if args.tfrecord is True:
-        print('Building tfrecord file.')
-
-        # Path to classes .names file
-        classes = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names'
-        # Path to output file
-        output_file = 'output.tfrecord'
-        #data_dir = os.path.join(os.getcwd())
-        #if not os.path.isdir(data_dir):
-        data_dir = os.getcwd()  # Path to directory containing jpeg images folder
-        class_map = {name: idx for idx, name in enumerate(open(classes).read().splitlines())}
-        logging.info("Class mapping loaded: %s", class_map)
-
-        writer = tf.io.TFRecordWriter(output_file)
-        image_list = open(os.path.join(data_dir, 'img_set.txt')).read().splitlines()
-        logging.info("Image list loaded: %d", len(image_list))
-        for image in tqdm.tqdm(image_list):
-            #name, _ = image.split()
-            name = image
-            annotation_xml = os.path.join(data_dir, 'Annotations', name + '.xml')
-            annotation_xml = lxml.etree.fromstring(open(annotation_xml).read())
-            annotation = parse_xml(annotation_xml)['annotation']
-            tf_example = build_example(annotation, class_map)
-            writer.write(tf_example.SerializeToString())
-        writer.close()
-        logging.info("\nDone\n")
 
     return
 
@@ -197,7 +163,5 @@ if __name__ == "__main__":
     parser.add_argument(
         '--dataset', help='path to folder of images for single dataset')
     parser.add_argument('--gt', default='/Users/justinbutler/Desktop/school/Calgary/Thesis Work/Datasets/UAV-benchmark-M/UAV-benchmark-MOTD_v1.0/GT', help='path to gt file')
-    parser.add_argument('--tfrecord', default=False,
-                        action='store_true', help='Boolian whether to create tfrecord file or not. Default False')
-    args = parser.parse_args()
+     args = parser.parse_args()
     main(args)
