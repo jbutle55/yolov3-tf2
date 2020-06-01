@@ -27,7 +27,7 @@ transfer = 'darknet'  # Can be 'none', 'darknet', 'no_output', 'frozen', 'fine_t
 '''
 image_size = 416
 num_epochs = 1
-batch_size = 8
+batch_size = 16
 learning_rate = 1e-3
 num_classes = 3
 weight_num_classes = 80  # num class for `weights` file if different, useful in transfer learning with different number of classes
@@ -142,7 +142,7 @@ else:
                   run_eagerly=(mode == 'eager_fit'))
     callbacks = [
         ReduceLROnPlateau(verbose=1),
-        EarlyStopping(patience=3, verbose=1),
+        #EarlyStopping(patience=3, verbose=1),
         ModelCheckpoint('checkpoints/yolov3_train_{epoch}.tf',
                         verbose=1, save_weights_only=True),
         TensorBoard(log_dir='logs')

@@ -4,14 +4,31 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {"name":"Python: Current File","type":"python","request":"launch","program":"${file}","console":"integratedTerminal"},
+        {
+            "name": "Python: gt_to_xml.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": ["--gt",
+                "/Users/justinbutler/Desktop/school/Calgary/Thesis Work/Datasets/UAV-benchmark-M/UAV-benchmark-MOTD_v1.0/GT",
+                "--dataset",
+                "/Users/justinbutler/Desktop/school/Calgary/Thesis Work/Datasets/UAV-benchmark-M/M0202"]
+        },
         {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--data_dir", "/Users/justinbutler/Desktop/test/M0101", "--split", "train", "--output_file", "/Users/justinbutler/Desktop/test/output.tfrecord"],
+            "args": [
+                "--data_dir",
+                "/Users/justinbutler/Desktop/test/M0101",
+                "--split",
+                "train",
+                "--output_file",
+                "/Users/justinbutler/Desktop/test/output.tfrecord"
+            ],
             "justMyCode": false
         }
     ]

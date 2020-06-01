@@ -5,10 +5,12 @@ import xml.etree.ElementTree as ET
 import re
 from xml.dom import minidom
 import cv2
+import shutil
 
 '''
 For parsing ground truth files from the large UAVDT dataset. (https://sites.google.com/site/daviddo0323/projects/uavdt)
 '''
+
 
 def main(args):
     print('Parsing GT file.')
@@ -27,9 +29,15 @@ def main(args):
     # Path to single ground truth file
     gt_dir = os.path.join(gt_dir, '{}_gt_whole.txt'.format(sub_id))
 
-    frame_list = os.scandir(os.path.join(dataset_dir, 'JPEGImages'))  # Get name of all frames in dataset
+    # Create JPEGImages directory and move all images into folder
+    if not os.path.isdir(os.path.join(dataset_dir, 'JPEGImages')):
+        os.mkdir(os.path.join(dataset_dir, 'JPEGImages'))
 
-    search = re.compile(r'.+(img\d+).jpg\S+')
+    new_path = os.path.join(dataset_dir, 'JPEGImages')
+
+    frame_list = os.listdir(dataset_dir)  # Get name of all frames in dataset
+
+    search = re.compile(r'(img\d+).jpg')
     frames = []
 
     for frame in frame_list:  # Loop through each frame number of dataset
@@ -37,7 +45,7 @@ def main(args):
             continue
 
         frame_stripped = search.match(str(frame)).group(1)
-        img = cv2.imread('{}/{}/{}.jpg'.format(dataset_dir, 'JPEGImages', frame_stripped))
+        img = cv2.imread('{}/{}.jpg'.format(dataset_dir, frame_stripped))
         im_height, im_width = img.shape[:2]
 
         frames.append(frame_stripped)
@@ -60,6 +68,9 @@ def main(args):
                                              'class': gt_items[8]}
         f.close()  # Close text file
         create_xml(frame_stripped, annot_dict, dataset_dir, im_width, im_height)  # Create xml for this frame
+
+        # Move image
+        shutil.move(os.path.join(dataset_dir, frame), new_path)
 
     os.chdir('..')
     with open('img_set.txt', 'w') as f:
@@ -163,5 +174,5 @@ if __name__ == "__main__":
     parser.add_argument(
         '--dataset', help='path to folder of images for single dataset')
     parser.add_argument('--gt', default='/Users/justinbutler/Desktop/school/Calgary/Thesis Work/Datasets/UAV-benchmark-M/UAV-benchmark-MOTD_v1.0/GT', help='path to gt file')
-     args = parser.parse_args()
+    args = parser.parse_args()
     main(args)

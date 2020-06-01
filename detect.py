@@ -23,10 +23,10 @@ for physical_device in physical_devices:
 
 yolo = YoloV3(classes=num_classes)
 yolo.load_weights(weights).expect_partial()
-logging.info('weights loaded')
+print('weights loaded')
 
 class_names = [c.strip() for c in open(class_path).readlines()]
-logging.info('classes loaded')
+print('classes loaded')
 
 if tfrecord:
     dataset = load_tfrecord_dataset(tfrecord, class_path, size)
@@ -43,10 +43,10 @@ t1 = time.time()
 boxes, scores, classes, nums = yolo(img)
 t2 = time.time()
 
-logging.info('time: {}'.format(t2 - t1))
-logging.info('detections:')
+print('time: {}'.format(t2 - t1))
+print('detections:')
 for i in range(nums[0]):
-    logging.info('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
+    print('\t{}, {}, {}'.format(class_names[int(classes[0][i])],
                                        np.array(scores[0][i]),
                                        np.array(boxes[0][i])))
 
@@ -54,4 +54,4 @@ img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
 img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
 cv2.imwrite(output, img)
 
-logging.info('output saved to: {}'.format(output))
+print('output saved to: {}'.format(output))
