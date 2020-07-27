@@ -337,16 +337,3 @@ if mode == 'valid':
     cv2.imwrite(output, img)
 
     print('output saved to: {}'.format(output))
-
-
-def calculate_mAP():
-    # Calculate the mean Average Precision of the yolo model
-    pass
-
-
-def calc_IoU():
-    pass
-
-
-def calc_precision_recall():
-    pass
