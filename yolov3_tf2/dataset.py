@@ -3,6 +3,7 @@ from absl.flags import FLAGS
 
 yolo_max_boxes = 100
 
+
 @tf.function
 def transform_targets_for_output(y_true, grid_size, anchor_idxs):
     # y_true: (N, boxes, (x1, y1, x2, y2, class, best_anchor))
@@ -83,8 +84,8 @@ def transform_images(x_train, size):
 IMAGE_FEATURE_MAP = {
     # 'image/width': tf.io.FixedLenFeature([], tf.int64),
     # 'image/height': tf.io.FixedLenFeature([], tf.int64),
-    # 'image/filename': tf.io.FixedLenFeature([], tf.string),
-    # 'image/source_id': tf.io.FixedLenFeature([], tf.string),
+    'image/filename': tf.io.FixedLenFeature([], tf.string),
+    'image/source_id': tf.io.FixedLenFeature([], tf.string),
     # 'image/key/sha256': tf.io.FixedLenFeature([], tf.string),
     'image/encoded': tf.io.FixedLenFeature([], tf.string),
     # 'image/format': tf.io.FixedLenFeature([], tf.string),
@@ -104,6 +105,8 @@ def parse_tfrecord(tfrecord, class_table, size):
     x = tf.io.parse_single_example(tfrecord, IMAGE_FEATURE_MAP)
     x_train = tf.image.decode_jpeg(x['image/encoded'], channels=3)
     x_train = tf.image.resize(x_train, (size, size))
+
+    img_id = x['image/filename']
 
     class_text = tf.sparse.to_dense(
         x['image/object/class/text'], default_value='')

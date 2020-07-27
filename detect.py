@@ -7,6 +7,7 @@ import tensorflow as tf
 from yolov3_tf2.models import YoloV3, YoloV3Tiny
 from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
 from yolov3_tf2.utils import draw_outputs
+from tensorflow_core.python.keras.models import load_model
 
 class_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names'  # Path to classes file
 weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf'  # Path to weight file
@@ -15,15 +16,19 @@ image = ''  # Path to input image
 tfrecord = None  # tfrecord instead of image or None
 output = ''  # Path to output image
 num_classes = 3  # Number of classes in model
-
+model_path = '/Users/justinbutler/Downloads/trained.h5'
+loading_model = False
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')
 for physical_device in physical_devices:
     tf.config.experimental.set_memory_growth(physical_device, True)
 
-yolo = YoloV3(classes=num_classes)
-yolo.load_weights(weights).expect_partial()
-print('weights loaded')
+if loading_model is False:
+    yolo = YoloV3(classes=num_classes)
+    yolo.load_weights(weights).expect_partial()
+    print('weights loaded')
+else:
+    yolo = load_model(model_path)
 
 class_names = [c.strip() for c in open(class_path).readlines()]
 print('classes loaded')

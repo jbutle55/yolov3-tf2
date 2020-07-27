@@ -16,19 +16,25 @@
                 "/Users/justinbutler/Desktop/school/Calgary/Thesis Work/Datasets/UAV-benchmark-M/M0202"]
         },
         {
+            "name": "Python: detect.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: train.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": [
-                "--data_dir",
-                "/Users/justinbutler/Desktop/test/M0101",
-                "--split",
-                "train",
-                "--output_file",
-                "/Users/justinbutler/Desktop/test/output.tfrecord"
-            ],
             "justMyCode": false
         }
     ]
