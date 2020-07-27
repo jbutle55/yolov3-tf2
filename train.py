@@ -182,7 +182,7 @@ t = True
 
 # Calculate mAP
 if t is True:
-    #model = YoloV3(image_size, training=False, classes=num_classes)
+    model = YoloV3(image_size, training=False, classes=num_classes)
     model.load_weights(
         '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolo_models/test/trained_weights')
 
@@ -265,22 +265,6 @@ if t is True:
 
     evaluator(predictions, filt_labels)  # Debug inside here next
 
-    while True:
-        # Read single image
-        test = next(iter(val_dataset), 'Empty')
-        img_raw, stuff = next(iter(val_dataset))
-        anchors = stuff[1]
-        img_raw, _label = next(iter(val_dataset), 'Empty')
-        if img_raw == 'Empty':
-            break
-        img = tf.expand_dims(img_raw, 0)
-        img = transform_images(img, image_size)
-
-        pred = model(img)
-        # boxes, scores, classes, nums = model(img)  # Predict on image
-
-        calc_IoU(pred)
-
 
 if mode == 'valid':
     # Path to classes file
@@ -337,3 +321,16 @@ if mode == 'valid':
     cv2.imwrite(output, img)
 
     print('output saved to: {}'.format(output))
+
+
+def calculate_mAP():
+    # Calculate the mean Average Precision of the yolo model
+    pass
+
+
+def calc_IoU():
+    pass
+
+
+def calc_precision_recall():
+    pass
