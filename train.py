@@ -1,4 +1,7 @@
 import tensorflow as tf
+print(tf.__version__)
+import sys
+print(sys.version)
 import numpy as np
 import cv2
 from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping, ModelCheckpoint, TensorBoard
@@ -112,7 +115,8 @@ else:
         freeze_all(model)
 optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
 loss = [YoloLoss(anchors[mask], classes=num_classes)
-        for mask in anchor_masks]
+        for mask in anchor_masks]  # Passing loss as a list might sometimes fail, dict might be better?
+print(loss)
 
 if mode == 'eager_tf':
     # Eager mode is great for debugging
@@ -204,6 +208,7 @@ if t is True:
 
     # labels - (N, grid, grid, anchors, [x, y, w, h, obj, class])
     boxes, scores, classes, num_detections = model.predict(val_dataset)
+    print('TEST HERE')
     # boxes - (8, 100, 4)  -> (num_imgs, num_detections, box coords)
 
     # Full labels shape -> [num_batches, grid scale, imgs]
