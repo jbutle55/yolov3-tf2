@@ -20,7 +20,7 @@ from tensorflow.keras.losses import (
 )
 from .utils import broadcast_iou
 
-yolo_max_boxes = 500  # Max number of boxes per image
+yolo_max_boxes = 200  # Max number of boxes per image
 yolo_iou_threshold = 0.5
 yolo_score_threshold = 0.1
 

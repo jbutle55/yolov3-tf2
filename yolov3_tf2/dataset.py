@@ -130,6 +130,7 @@ def load_tfrecord_dataset(file_pattern, class_file, size=416):
 
     files = tf.data.Dataset.list_files(file_pattern)
     dataset = files.flat_map(tf.data.TFRecordDataset)
+        
     return dataset.map(lambda x: parse_tfrecord(x, class_table, size))
 
 

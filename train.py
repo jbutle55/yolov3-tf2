@@ -15,8 +15,12 @@ from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
 from eval_utils import Evaluator
 
 
-train_path = '/Users/justinbutler/Desktop/test/tiny_test/M0101/output.tfrecord'
-valid_path = '/Users/justinbutler/Desktop/test/tiny_test/M0201/output.tfrecord'
+#train_path = '/Users/justinbutler/Desktop/test/tiny_test/M0101/output.tfrecord'
+#train_path = '/Users/justinbutler/Desktop/test/tiny_aerial/train/train.tfrecord'
+train_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/train/train.tfrecord'
+#valid_path = '/Users/justinbutler/Desktop/test/tiny_test/M0201/output.tfrecord'
+#valid_path = '/Users/justinbutler/Desktop/test/tiny_aerial/train/train.tfrecord'
+valid_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/train/train.tfrecord'
 weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf'
 #weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolo_models/train-day/checkpoint_trained.tf'
 # Path to text? file containing all classes, 1 per line
@@ -43,7 +47,7 @@ image_size = 416
 num_epochs = 3
 batch_size = 16
 learning_rate = 1e-3
-num_classes = 3
+num_classes = 9
 # num class for `weights` file if different, useful in transfer learning with different number of classes
 weight_num_classes = 80
 
@@ -115,8 +119,7 @@ else:
         freeze_all(model)
 optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
 loss = [YoloLoss(anchors[mask], classes=num_classes)
-        for mask in anchor_masks]  # Passing loss as a list might sometimes fail, dict might be better?
-print(loss)
+        for mask in anchor_masks]  # Passing loss as a list might sometimes fail? dict might be better?
 
 if mode == 'eager_tf':
     # Eager mode is great for debugging

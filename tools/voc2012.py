@@ -35,7 +35,17 @@ def build_example(annotation, class_map):
     views = []
     difficult_obj = []
     if 'object' in annotation:
+        count = 0
         for obj in annotation['object']:
+            # Safety check for super small boxes
+            if (float(obj['bndbox']['xmax']) - float(obj['bndbox']['xmin'])) / width < 0.05:
+                print('DANGER WIDTH - {}'.format((float(obj['bndbox']['xmax']) - float(obj['bndbox']['xmin'])) / width))
+                count = count + 1
+                continue
+            if (float(obj['bndbox']['ymax'])) - float(obj['bndbox']['ymin']) / height < 0.05:
+                print('DANGER HEIGHT')
+                continue
+
             #difficult = bool(int(obj['difficult']))
             #difficult_obj.append(int(difficult))
 
@@ -48,6 +58,25 @@ def build_example(annotation, class_map):
             #truncated.append(int(obj['truncated']))
             #views.append(obj['pose'].encode('utf8'))
 
+            # Safety check nothing is outside the range of 0 to 1
+            if 0 > float(obj['bndbox']['xmin']) / width > 1:
+                print('DANGER')
+            if 0 > float(obj['bndbox']['xmax']) / width > 1:
+                print('DANGER')
+            if 0 > float(obj['bndbox']['ymin']) / height > 1:
+                print('DANGER')
+            if 0 > float(obj['bndbox']['ymax']) / height > 1:
+                print('DANGER')
+
+            # Safety check for super small boxes
+            if (float(obj['bndbox']['xmax']) - float(obj['bndbox']['xmin'])) / width < 0.05:
+                print('DANGER WIDTH - {}'.format((float(obj['bndbox']['xmax']) - float(obj['bndbox']['xmin'])) / width))
+                count = count + 1
+            if (float(obj['bndbox']['ymax'])) - float(obj['bndbox']['ymin']) / height < 0.05:
+                print('DANGER HEIGHT')
+
+    print('Number of danger objects ignored: {}'.format(count))
+    
     example = tf.train.Example(features=tf.train.Features(feature={
         'image/height': tf.train.Feature(int64_list=tf.train.Int64List(value=[height])),
         'image/width': tf.train.Feature(int64_list=tf.train.Int64List(value=[width])),
