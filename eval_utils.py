@@ -1,6 +1,6 @@
 import numpy as np
 import tqdm
-
+import matplotlib.pyplot as plt
 
 class Evaluator:
     """
@@ -14,7 +14,8 @@ class Evaluator:
         """
         self.iou_threshold = iou_thresh
         self.confidence_threshold = conf_thresh
-        
+
+        self.target_classes = []
         self.precision = None
         self.recall = None
         self.AP = None
@@ -43,14 +44,16 @@ class Evaluator:
 
         # Pass gts in form [num_imgs x 3 x [img no., class, x1, y1, x2, y2]]
         metrics = self.calc_batch_stats(outputs, ground_truths)
+        # Returns [true_positives, pred_scores, pred_classes]
 
         self.true_positives, self.pred_scores, self.pred_classes = [np.concatenate(x, 0) for x in list(zip(*metrics))]
-        self.target_classes = []
+        # Flatten target classes list
+        self.target_classes = [item for sub in self.target_classes for item in sub]
 
         self.calcMeanAveragePrecision_perClass()
 
         self.display_results()
-        
+
         return
 
     def non_max_suppression(self, predictions):
@@ -186,7 +189,7 @@ class Evaluator:
 
         for iImg, outputs in enumerate(preds):
             # Complete loop for each image
-            if preds[0].shape == 0:
+            if len(outputs) == 0:
                 # No predictions to evaluate
                 continue
 
@@ -202,36 +205,45 @@ class Evaluator:
             annotations = gts[iImg]
             # Get the target class labels
             target_labels = []  # Should finish with shape [class, class, ...]
-            for annot in annotations:
-                target_labels.append(annot[-1])
+            for scale in annotations:
+                for annot in scale:
+                    target_labels.append(annot[-1])
+
+            self.target_classes.append(target_labels)
 
             if len(annotations):
                 detected_boxes = []
                 target_boxes = []  # Should finish with shape [3 x [x1,y1,x2,y2]]
                 # Get the target bboxes
-                for annot in annotations:
-                    if len(annot):
-                        target_boxes.append(annot[:4])
-                    else:
-                        target_boxes.append([])
+                for scale in annotations:
+                    for annot in scale:
+                        if len(annot):
+                            target_boxes.append(annot[:4])
+                        else:
+                            target_boxes.append([])
 
                 for iPred, (pred_box, pred_label) in enumerate(zip(pred_boxes, pred_classes)):
                     # If target found, break
-                    #if len(detected_boxes) == len(annotations):
-                    #    break
+                    if len(detected_boxes) == len(annotations):
+                        break
 
                     # Ignore class if not the target class
                     if pred_label not in target_labels:
                         # Means false positive
                         continue
 
+
                     iou, iBox = self.calc_bbox_iou(
                         pred_box, target_boxes)
+                    
+                    # Ensure only GTs of class in question are used
+                    #match = (target_labels == pred_label) & (iou >= self.iou_threshold)
+                    
                     if iou >= self.iou_threshold and iBox not in detected_boxes:
                         # Record the prediction as TP
                         true_positives[iPred] = 1
-                        #detected_boxes += [iBox]  # Unnecesary?
-        metrics.append([true_positives, pred_scores, pred_classes])
+                        detected_boxes.append(iBox)  # Unnecesary?
+            metrics.append([true_positives, pred_scores, pred_classes])
 
         return metrics
 
@@ -262,7 +274,7 @@ class Evaluator:
                 p.append(0)
                 r.append(0)
             else:
-                fp_count = (1 - tp[i].cumsum())  # Get num. of false positives
+                fp_count = (1 - tp[i]).cumsum()  # Get num. of false positives
                 tp_count = (tp[i]).cumsum()  # Get num. of true positives
 
                 # Recall
@@ -271,12 +283,11 @@ class Evaluator:
                 r.append(recall_curve[-1])
 
                 # Precision
-                precision_curve = tp_count / \
-                    (tp_count + fp_count)  # Calc precision values
+                precision_curve = tp_count / (tp_count + fp_count)  # Calc precision values
                 p.append(precision_curve[-1])
 
                 # AP from recall-precision curve
-                ap.append(calc_ap(recall_curve, precision_curve))
+                ap.append(self.calc_ap(recall_curve, precision_curve))
 
         # Compute F1 score
         p, r, ap = np.array(p), np.array(r), np.array(ap)
@@ -302,11 +313,16 @@ class Evaluator:
             [type]: The computed average precision
         """
         mrec = np.concatenate(([0.0], recall, [1.0]))
-        mpre = np.concatenate(([0.0], precision, [1.0]))
+        mpre = np.concatenate(([1.0], precision, [0.0]))
+
+        # Plot precision-recall graph
+        #self.plot_precision_recall(mpre, mrec)
 
         # Compute precision envelope
         for i in range(mpre.size - 1, 0, -1):
             mpre[i-1] = np.maximum(mpre[i-1], mpre[i])
+
+        #self.plot_precision_recall(mpre, mrec)
 
         # Find points along x-axis where PR changes direction
         i = np.where(mrec[1:] != mrec[:-1])[0]
@@ -315,11 +331,29 @@ class Evaluator:
 
         return ap
 
-    def display_results(self):
+    def plot_precision_recall(self, precision, recall):
+        plt.plot(recall, precision, 'r+')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.show()
+        return
+
+    def display_results(self, save_to_text=True):
+        text_file = open('Eval_Results.txt', 'w')
+
+        # Find better way to do this so not requiring manual changes
+        class_dict = {0: 'car', 1: 'bus', 2: 'truck', 3: 'person',
+                      4: 'bicycle', 5: 'motorbike', 6: 'train',
+                      7: 'building', 8: 'traffic light'}
+
         print('Average Precisions: ')
         for i, c in enumerate(self.unique_classes):
-            print('Class {} - AP: {}'.format(c, self.AP[i]))
+            print('Class {} - AP: {}'.format(class_dict[c], self.AP[i]))
+            text_file.write('Class {} - AP: {} \n'.format(class_dict[c], self.AP[i]))
 
         print('mAP: {}'.format(self.AP.mean()))
+        text_file.write('mAP: {}'.format(self.AP.mean()))
+
+        text_file.close()
 
         return
