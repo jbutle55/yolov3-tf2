@@ -18,14 +18,10 @@ print(sys.version)
 
 
 def main(args):
-    #train_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/train/train.tfrecord'
     train_path = args.train_dataset
-    #valid_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/train/train.tfrecord'
     valid_path = args.valid_dataset
-    #weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf'
     weights_path = args.weights
     # Path to text? file containing all classes, 1 per line
-    #classes = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names'
     classes = args.classes
     # Usually fit
     #mode = 'fit'  # Can be 'fit', 'eager_fit', 'eager_tf', 'valid'
@@ -37,7 +33,6 @@ def main(args):
     '''
 
     # Usually darknet
-    #transfer = 'darknet'  # Can be 'none', 'darknet', 'no_output', 'frozen', 'fine_tune', 'pre'
     transfer = args.transfer
     '''
     'none: Training from scratch, '
@@ -59,7 +54,7 @@ def main(args):
     #weight_num_classes = 80
     weight_num_classes = args.num_weight_class
     
-    saved_weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolo_models/test/trained_weights'
+    saved_weights_path = '/weights/trained_weights'
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
