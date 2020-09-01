@@ -54,7 +54,7 @@ def main(args):
     #weight_num_classes = 80
     weight_num_classes = args.num_weight_class
     
-    saved_weights_path = '/weights/trained_weights'
+    saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_weights'
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
