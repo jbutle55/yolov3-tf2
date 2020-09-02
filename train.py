@@ -12,6 +12,7 @@ import time
 from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
 from eval_utils import Evaluator
 import argparse
+import time
 
 print(tf.__version__)
 print(sys.version)
@@ -66,6 +67,7 @@ def main(args):
     if args.no_train:
         print('Skipping training...')
     else:
+        start_time = time.time()
         model = YoloV3(image_size, training=True, classes=num_classes)
 
         train_dataset = dataset.load_tfrecord_dataset(train_path,
@@ -190,6 +192,9 @@ def main(args):
                                 validation_data=val_dataset)
 
             model.save_weights(saved_weights_path)
+        finish_time = time.time()
+        train_time = train_time - start_time
+        print('Training time elapsed: {}'.format(train_time))
 
     # Calculate mAP
     if args.validate:
