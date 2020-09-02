@@ -53,7 +53,7 @@ def main(args):
     # num class for `weights` file if different, useful in transfer learning with different number of classes
     #weight_num_classes = 80
     weight_num_classes = args.num_weight_class
-    
+
     saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_weights'
 
     anchors = yolo_anchors
@@ -209,7 +209,7 @@ def main(args):
 
         predictions = []
 
-        evaluator = Evaluator(iou_thresh=0.5)
+        evaluator = Evaluator(iou_thresh=args.iou)
 
         # labels - (N, grid, grid, anchors, [x, y, w, h, obj, class])
         boxes, scores, classes, num_detections = model.predict(val_dataset)
@@ -345,6 +345,7 @@ if __name__ == "__main__":
     parser.add_argument('--no_train', '-nt', action='store_true', help='')
     parser.add_argument('--validate', '-v', action='store_true', help='')
     parser.add_argument('--valid_imgs', action='store_true', default=False)
+    parser.add_argument('--iou', required=False, default=0.5)
 
     args = parser.parse_args()
     main(args)
