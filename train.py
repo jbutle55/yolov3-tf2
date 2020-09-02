@@ -281,8 +281,8 @@ def main(args):
 
         evaluator(predictions, filt_labels)  # Check gts box coords
 
-    mode = 'valid'
-    if mode == 'valid':
+    mode = args.valid_imgs
+    if mode is True:
         print('Validation Image...')
         # Find better way to do this so not requiring manual changes
         class_dict = {0: 'car', 1: 'bus', 2: 'truck', 3: 'person',
@@ -344,6 +344,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_weight_class', type=int, default=80, required=False, help='')
     parser.add_argument('--no_train', '-nt', action='store_true', help='')
     parser.add_argument('--validate', '-v', action='store_true', help='')
+    parser.add_argument('--valid_imgs', action='store_true', default=False)
 
     args = parser.parse_args()
     main(args)
