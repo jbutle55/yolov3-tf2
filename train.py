@@ -193,7 +193,7 @@ def main(args):
 
             model.save_weights(saved_weights_path)
         finish_time = time.time()
-        train_time = train_time - start_time
+        train_time = finish_time - start_time
         print('Training time elapsed: {}'.format(train_time))
 
     # Calculate mAP
