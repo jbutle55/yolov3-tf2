@@ -350,7 +350,7 @@ if __name__ == "__main__":
     parser.add_argument('--no_train', '-nt', action='store_true', help='')
     parser.add_argument('--validate', '-v', action='store_true', help='')
     parser.add_argument('--valid_imgs', action='store_true', default=False)
-    parser.add_argument('--iou', required=False, default=0.5, type=int)
+    parser.add_argument('--iou', required=False, default=0.5, type=float)
 
     args = parser.parse_args()
     main(args)
