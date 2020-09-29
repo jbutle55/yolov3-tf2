@@ -2,6 +2,7 @@ import numpy as np
 import tqdm
 import matplotlib.pyplot as plt
 
+
 class Evaluator:
     """
     Evaluator class for YOLO object detection.
@@ -21,6 +22,9 @@ class Evaluator:
         self.AP = None
         self.f1 = None
         self.unique_classes = None
+        self.true_positives_list = []
+        self.false_positives_list = []
+        self.false_negative_list = []
 
     def __call__(self, outputs, ground_truths):
         """
@@ -31,15 +35,13 @@ class Evaluator:
                 In the format [num_imgs x [box coords, conf, classes]]
             ground_truths (np array): A list of all ground truth annotations
                 for the batch. In the format [num_imgs, 3x[num_boxes x [x1,y1,x2,y2,score,class]]
-            iou_threshold (float, optional): The threshold value for
-                calculation of IoU statistics. Defaults to 0.5.
         """
         # GT actaully in shape [num imgs x 3 scales x num_boxes x (x1,y1,x2,y2,obj,class)]
         # Convert gts x,y,w,h to x1,y1,x2,y2 - passed in as form [num img's x 3 x 6]
-        #ground_truths[:, :] = self.convert2xyxy(ground_truths[:, :4])
+        # ground_truths[:, :] = self.convert2xyxy(ground_truths[:, :4])
 
         # Boxes may already be suppresed during prediction
-        #suppressed_preds = self.non_max_suppression(outputs)
+        # suppressed_preds = self.non_max_suppression(outputs)
         # targets?
 
         # Pass gts in form [num_imgs x 3 x [img no., class, x1, y1, x2, y2]]
@@ -119,12 +121,11 @@ class Evaluator:
             [int]: The associated box index for the max IoU value 
         """
         iou = []
-        test = bbox_target
 
         b1_x1, b1_y1, b1_x2, b1_y2 = bbox_pred[0], bbox_pred[1], bbox_pred[2], bbox_pred[3]
         # Cycle through target boxes of all three scales
-        #bbox_target = [np.squeeze(box) for box in bbox_target if len(box)]  # Remove boxes at empty scales
-        #bbox_target = [ind_box for ind_box in bbox_target[0]]  # Clean up list in list
+        # bbox_target = [np.squeeze(box) for box in bbox_target if len(box)]  # Remove boxes at empty scales
+        # bbox_target = [ind_box for ind_box in bbox_target[0]]  # Clean up list in list
 
         for box in bbox_target:
             b2_x1, b2_y1, b2_x2, b2_y2 = box[0], box[1], box[2], box[3]
@@ -153,14 +154,13 @@ class Evaluator:
 
         return iou_max, bIndex
 
-    def convert2xyxy(self, coords, targets=False):
+    def convert2xyxy(self, coords):
         """
         Takes coordinates in the x,y,w,h form and converts to x1,x2,y1,y2. x1,y1 corresponds to top
         left corner, x2,y2 corresponds to bottom right corner.
 
         Args:
             coords ([numpy array]): Box coordintes in the form centerx, centery, width, height
-            targets (bool, optional): [description]. Defaults to False.
 
         Returns:
             [float]: Bounding box coordinates in form x1,y1,x2,y2
@@ -178,7 +178,7 @@ class Evaluator:
         """[summary]
 
         Args:
-            outputs ([type]): [description]
+            preds ([type]): [description]
             gts ([type]): [description]
 
         Returns:
@@ -232,23 +232,21 @@ class Evaluator:
                         # Means false positive
                         continue
 
-
                     iou, iBox = self.calc_bbox_iou(
                         pred_box, target_boxes)
                     
                     # Ensure only GTs of class in question are used
-                    #match = (target_labels == pred_label) & (iou >= self.iou_threshold)
+                    # match = (target_labels == pred_label) & (iou >= self.iou_threshold)
                     
                     if iou >= self.iou_threshold and iBox not in detected_boxes:
                         # Record the prediction as TP
                         true_positives[iPred] = 1
-                        detected_boxes.append(iBox)  # Unnecesary?
+                        detected_boxes.append(iBox)
             metrics.append([true_positives, pred_scores, pred_classes])
 
         return metrics
 
     def calcMeanAveragePrecision_perClass(self):
-
         tps = self.true_positives
         conf = self.pred_scores
         pred_classes = self.pred_classes
@@ -262,10 +260,12 @@ class Evaluator:
         unique_classes = np.unique(target_classes)
 
         ap, p, r = [], [], []
+        self.true_positives_list, self.false_positives_list = [], []
+        self.false_negative_list = []
         for c in tqdm.tqdm(unique_classes, desc='Computing AP'):
-            i = pred_classes == c  # Get matches of classes with pred_classes
-            num_gt = (target_classes == c).sum()  # Get number of groundtruth
-            num_pred = i.sum()  # Get number of predictions
+            i = pred_classes == c  # Get positive matches of classes with pred_classes
+            num_gt = (target_classes == c).sum()  # Get number of groundtruth for class
+            num_pred = i.sum()  # Get number of positive predictions
 
             if num_pred == 0 and num_gt == 0:
                 continue
@@ -273,6 +273,10 @@ class Evaluator:
                 ap.append(0)
                 p.append(0)
                 r.append(0)
+
+                self.true_positives_list.append(0)
+                self.false_positives_list.append(0)
+
             else:
                 fp_count = (1 - tp[i]).cumsum()  # Get num. of false positives
                 tp_count = (tp[i]).cumsum()  # Get num. of true positives
@@ -288,6 +292,9 @@ class Evaluator:
 
                 # AP from recall-precision curve
                 ap.append(self.calc_ap(recall_curve, precision_curve))
+
+                self.true_positives_list.append(tp_count[-1])
+                self.false_positives_list.append(fp_count[-1])
 
         # Compute F1 score
         p, r, ap = np.array(p), np.array(r), np.array(ap)
@@ -316,13 +323,13 @@ class Evaluator:
         mpre = np.concatenate(([1.0], precision, [0.0]))
 
         # Plot precision-recall graph
-        #self.plot_precision_recall(mpre, mrec)
+        # self.plot_precision_recall(mpre, mrec)
 
         # Compute precision envelope
         for i in range(mpre.size - 1, 0, -1):
             mpre[i-1] = np.maximum(mpre[i-1], mpre[i])
 
-        #self.plot_precision_recall(mpre, mrec)
+        # self.plot_precision_recall(mpre, mrec)
 
         # Find points along x-axis where PR changes direction
         i = np.where(mrec[1:] != mrec[:-1])[0]
@@ -338,7 +345,7 @@ class Evaluator:
         plt.show()
         return
 
-    def display_results(self, save_to_text=True):
+    def display_results(self):
         text_file = open('Eval_Results.txt', 'w')
 
         # Find better way to do this so not requiring manual changes
@@ -350,6 +357,8 @@ class Evaluator:
         for i, c in enumerate(self.unique_classes):
             print('Class {} - AP: {}'.format(class_dict[c], self.AP[i]))
             text_file.write('Class {} - AP: {} \n'.format(class_dict[c], self.AP[i]))
+            text_file.write('True Positives - {}\n False Positives - {}\n\n'.format(len(self.true_positives_list),
+                                                                                    len(self.false_positives_list)))
 
         print('mAP: {}'.format(self.AP.mean()))
         text_file.write('mAP: {}'.format(self.AP.mean()))

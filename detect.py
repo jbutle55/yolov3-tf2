@@ -9,14 +9,14 @@ from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
 from yolov3_tf2.utils import draw_outputs
 from tensorflow_core.python.keras.models import load_model
 
-class_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names'  # Path to classes file
-weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf'  # Path to weight file
-size = 416  # Resize images to size
+class_path = 'classes.names'  # Path to classes file
+weights = '/checkpoints/yolov3_608.tf'  # Path to weight file
+size = 608  # Resize images to size - 416 04 608
 image = ''  # Path to input image
 tfrecord = None  # tfrecord instead of image or None
 output = ''  # Path to output image
 num_classes = 3  # Number of classes in model
-model_path = '/Users/justinbutler/Downloads/trained.h5'
+model_path = 'trained.h5'
 loading_model = False
 
 physical_devices = tf.config.experimental.list_physical_devices('GPU')

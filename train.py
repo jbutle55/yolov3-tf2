@@ -25,7 +25,7 @@ def main(args):
     # Path to text? file containing all classes, 1 per line
     classes = args.classes
     # Usually fit
-    #mode = 'fit'  # Can be 'fit', 'eager_fit', 'eager_tf', 'valid'
+    # mode = 'fit'  # Can be 'fit', 'eager_fit', 'eager_tf', 'valid'
     mode = args.mode
     '''
     'fit: model.fit, '
@@ -43,19 +43,16 @@ def main(args):
                       'fine_tune: Transfer all and freeze darknet only'),
                       'pre': Use a pre-trained model for validation
     '''
-    image_size = 416
-    #num_epochs = 3
+    image_size = 608  # 416
     num_epochs = args.epochs
-    #batch_size = 16
     batch_size = args.batch_size
     learning_rate = 1e-3
-    #num_classes = 9
     num_classes = args.num_classes
     # num class for `weights` file if different, useful in transfer learning with different number of classes
-    #weight_num_classes = 80
     weight_num_classes = args.num_weight_class
 
-    saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_weights'
+    saved_weights_path =  '/weights/trained_weights'
+    # saved_weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolo_models/trained_weights'
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
@@ -242,10 +239,10 @@ def main(args):
 
         # Remove any labels consisting of all 0's
         filt_labels = []
-        #for img in range(len(full_labels_flat)):
+        # for img in range(len(full_labels_flat)):
         for img in full_labels_flat:
             test = []
-            #for scale in full_labels_flat[img]:
+            # for scale in full_labels_flat[img]:
             for scale in img:
                 lab_list = []
                 for g1 in scale:
@@ -263,10 +260,10 @@ def main(args):
                 test.append(np.asarray(lab_list))
             filt_labels.append(np.asarray(test))
         filt_labels = np.asarray(filt_labels)  # Numpy array of shape [num_imgs, 3x[num_boxesx[x1,y1,x2,y2,score,class]]]
-        #filt_labels = filt_labels[:, :4] * image_size
+        # filt_labels = filt_labels[:, :4] * image_size
 
         # i is the num_images index
-        #predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
+        # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
         for img in range(len(num_detections)):
             row = []
             for sc in range(len(scores[img])):
@@ -280,7 +277,7 @@ def main(args):
             print('No predictions made - exiting.')
             exit()
 
-        #predictions[:, :, 0:4] = predictions[:, :, 0:4] * image_size
+        # predictions[:, :, 0:4] = predictions[:, :, 0:4] * image_size
         # Predictions format - [num_imgs x num_preds x [box coords x4, score, classes]]
         # Box coords should be in format x1 y1 x2 y2
 
@@ -298,20 +295,10 @@ def main(args):
         class_names = list(class_dict.values())
         print('classes loaded')
 
-        #val_dataset = dataset.load_tfrecord_dataset(valid_path,
-        #                                            classes,
-        #                                            image_size)
-        #val_dataset = val_dataset.map(lambda x, y: (
-        #    dataset.transform_images(x, image_size),
-        #    dataset.transform_targets(y, anchors, anchor_masks, image_size)))
-
-        test2 = []
-        index = 0
         for img in val_dataset:
             test2.append(img)
 
         # boxes, scores, classes, num_detections
-        test = []
         index = 0
         for img in val_dataset:
             image = img[0][0]

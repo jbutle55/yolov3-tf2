@@ -25,13 +25,13 @@
             "request": "launch",
             "program": "/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/train.py",
             "console": "integratedTerminal",
-            "args": ["--train_dataset", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/train/train.tfrecord",
-                "--valid_dataset", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-dataset-master/aerial_yolo/valid/valid.tfrecord",
-                "--weights", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3.tf",
+            "args": ["--train_dataset", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/train/train.tfrecord",
+                "--valid_dataset", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/valid/valid.tfrecord",
+                "--weights", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3_608.tf",
                 "--classes", "/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/classes.names",
                 "--num_classes", "9",
                 "--epochs", "1",
-                "--batch_size", "16",
+                "--batch_size", "8",
                 "--validate"]
         },
         {
