@@ -51,8 +51,8 @@ def main(args):
     # num class for `weights` file if different, useful in transfer learning with different number of classes
     weight_num_classes = args.num_weight_class
 
-    saved_weights_path =  '/weights/trained_weights'
-    # saved_weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolo_models/trained_weights'
+    #saved_weights_path =  '/weights/trained_weights'
+    saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights'
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
