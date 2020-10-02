@@ -19,6 +19,8 @@ print(sys.version)
 
 
 def main(args):
+    tf.config.experimental.list_physical_devices('GPU')
+
     train_path = args.train_dataset
     valid_path = args.valid_dataset
     weights_path = args.weights
