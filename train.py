@@ -55,6 +55,7 @@ def main(args):
 
     # saved_weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/weights/'
     saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_{}.tf'.format(num_epochs)
+    saved_weights_path = args.saved_weights
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
@@ -340,6 +341,8 @@ if __name__ == "__main__":
     parser.add_argument('--validate', '-v', action='store_true', help='')
     parser.add_argument('--valid_imgs', action='store_true', default=False)
     parser.add_argument('--iou', required=False, default=0.5, type=float)
+    parser.add_argument('--saved_weights', default='/weights/trained_model.tf',
+                        help='Also the model path for validation if running with no training.')
 
     args = parser.parse_args()
     main(args)
