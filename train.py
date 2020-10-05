@@ -54,7 +54,7 @@ def main(args):
     weight_num_classes = args.num_weight_class
 
     # saved_weights_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/weights/'
-    saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights'
+    saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_{}.tf'.format(num_epochs)
 
     anchors = yolo_anchors
     anchor_masks = yolo_anchor_masks
