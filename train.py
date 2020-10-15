@@ -45,7 +45,7 @@ def main(args):
                       'fine_tune: Transfer all and freeze darknet only'),
                       'pre': Use a pre-trained model for validation
     '''
-    image_size = 608  # 416
+    image_size = 416  # 416
     num_epochs = args.epochs
     batch_size = args.batch_size
     learning_rate = 1e-3
@@ -343,6 +343,7 @@ if __name__ == "__main__":
     parser.add_argument('--iou', required=False, default=0.5, type=float)
     parser.add_argument('--saved_weights', default='/weights/trained_model.tf',
                         help='Also the model path for validation if running with no training.')
+    parser.add_argument('--output_dir', help='')
 
     args = parser.parse_args()
     main(args)
