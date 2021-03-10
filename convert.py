@@ -31,7 +31,7 @@ def main(_argv):
     logging.info('sanity check passed')
 
     yolo.save_weights(FLAGS.output)
-    logging.info('weights saved')
+    logging.info('weights saved at {}'.format(FLAGS.output))
 
 
 if __name__ == '__main__':
