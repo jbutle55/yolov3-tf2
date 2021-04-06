@@ -288,6 +288,8 @@ class Evaluator:
 
             total_objs = 0
             for unique_class in unique_classes:
+                print('Number each class')
+                print(number_each_class[unique_class])
                 total_objs += number_each_class[unique_class]
             print(total_objs)
 
