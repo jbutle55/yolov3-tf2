@@ -282,6 +282,8 @@ class Evaluator:
                             detected_boxes.append(iPred)  # Append index of gt boxes not coords
                             detected_classes.append(pred_classes[iPred])
 
+                            print('Predicted')
+
                             per_class_preds[pred_label] += 1
 
             unique_classes = np.unique(self.target_classes)
