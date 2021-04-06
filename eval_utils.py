@@ -286,7 +286,10 @@ class Evaluator:
 
             unique_classes = np.unique(self.target_classes)
 
+            print(unique_classes)
+
             for unique_class in unique_classes:
+                unique_class = int(unique_class)
                 true_negs[unique_class] = number_each_class[unique_class] - per_class_preds[unique_class]
                 print(number_each_class)
                 print(true_negs)
