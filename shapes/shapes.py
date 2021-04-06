@@ -139,83 +139,37 @@ def main():
     # classes -> (num_imgs, num_detections)
     # num_detections -> num_imgs
 
+    # Aim for labels shape (per batch): [num_imgs, 3x[num_boxes x [x1,y1,x2,y2,score,class]]
+    # full_labels = [label for _, label in val_dataset]
 
-    # Full labels shape -> [num_batches, grid scale, imgs]
-    # Full labels shape -> [num_batches, [grid, grid, anchors, [x,y,w,h,obj,class]]]
-    full_labels = np.asarray([label for _, label in val_dataset])
-    full_labels = [label for _, label in val_dataset]  # Shape [num_imgs x 3 [1, 13, 13, 3, 6]
+    # Shape : [Num images, 3 scales, grid, grid, anchor, 6 ]
 
-    test = np.empty(len(full_labels))
+    filtered_labels = []
 
-    # Aim Labels shape: [num_imgs, 3x[num_boxes x [x1,y1,x2,y2,score,class]]
+    for _, label in val_dataset:
+        img_labels = []
+        # Label has shape [3 scales x[1, grid, grid, 3, 6]]
+        for scale in label:
+            # Shape [1, grid, grid, 3, 6]
+            scale = np.asarray(scale)
+            grid = scale.shape[1]
 
-    for img in full_labels:
-        for scale in img:
-            scale = np.empty(1)
-            less_dim = scale[0]
-            for grid1 in less_dim:
-                for grid2 in grid1:
-                    for anchor in grid2:
-                        x1 = anchor[0]
-                        y1 = anchor[1]
-                        w = anchor[2]
-                        h = anchor[3]
-                        obj = anchor[4]
-                        cls = anchor[5]
+            scale2 = np.reshape(scale, (3, grid * grid, 6))
+            # Shape: [3, grix*grid, 6]
 
-                        x2 = x1 + w
-                        y2 = y1 + h
+            for anchor in scale2:
+                filtered_anchors = []
+                for box in anchor:
+                    if box[4] > 0:
+                        filtered_anchors.append(np.asarray(box))
+            img_labels.append(filtered_anchors)
 
-                        if obj != 0:
-                            vect = [x1, y1, x2, y2, obj, cls]
-                            np.append(scale, vect)
+        img_labels = np.asarray(img_labels)
+        filtered_labels.append(img_labels)
 
-
-
-
-
-
-
-    # Shape -> [num_batches, num_imgs_in_batch, 3]
-    # Shape -> [num_batches, num_imgs, 3x[grid,grid,anchors,[x,y,w,h,score,class]]]
-    full_labels_trans = full_labels.transpose(0, 2, 1)
-
-    full_labels_flat = []
-
-    for batch in full_labels_trans:
-        for img in batch:
-            row = []
-            for scale in img:
-                row.append(scale)
-            full_labels_flat.append(row)
-
-    # Shape -> [num_imgs x 3]
-    full_labels_flat = np.asarray(full_labels_flat)
-
-    # Remove any labels consisting of all 0's
-    filt_labels = []
-    # for img in range(len(full_labels_flat)):
-    for img in full_labels_flat:
-        test = []
-        # for scale in full_labels_flat[img]:
-        for scale in img:
-            lab_list = []
-            for g1 in scale:
-                for g2 in g1:
-                    for anchor in g2:
-                        if anchor[0] > 0:
-                            temp = [anchor[0] * image_size,
-                                    anchor[1] * image_size,
-                                    anchor[2] * image_size,
-                                    anchor[3] * image_size,
-                                    anchor[4],
-                                    anchor[5]]
-                            temp = [float(x) for x in temp]
-                            lab_list.append(np.asarray(temp))
-            test.append(np.asarray(lab_list))
-        filt_labels.append(np.asarray(test))
-    filt_labels = np.asarray(filt_labels)  # Numpy array of shape [num_imgs, 3x[num_boxesx[x1,y1,x2,y2,score,class]]]
-    # filt_labels = filt_labels[:, :4] * image_size
+    print(len(filtered_labels))
+    print(len(filtered_labels[0]))
+    print(len(filtered_labels[0][2]))
 
     # i is the num_images index
     # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
@@ -236,7 +190,7 @@ def main():
     # Box coords should be in format x1 y1 x2 y2
 
     # Labels shape: [num_imgs, 3x[num_boxes x [x1,y1,x2,y2,score,class]]
-    evaluator(predictions, filt_labels, images)  # Check gts box coords
+    evaluator(predictions, filtered_labels, images)  # Check gts box coords
 
 
     '''
