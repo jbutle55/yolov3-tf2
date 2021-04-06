@@ -297,8 +297,9 @@ class Evaluator:
             print('TESTTEST')
 
             for unique_class in unique_classes:
-                # If preds exist: continue
-                if len(per_class_preds[unique_class]) == 0:
+                # If no preds exist
+                if len(per_class_preds) == 0:
+                    true_negs[unique_class] = 0
                     continue
 
                 unique_class = unique_class
