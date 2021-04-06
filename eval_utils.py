@@ -289,9 +289,9 @@ class Evaluator:
             total_objs = 0
             for unique_class in unique_classes:
                 print('Number each class')
-                print(number_each_class[unique_class])
+                print('{} - {}'.format(unique_class, number_each_class[unique_class]))
                 total_objs += number_each_class[unique_class]
-            print(total_objs)
+            print('Total {}'.format(total_objs))
 
             print('TEST')
             print(number_each_class)
@@ -299,6 +299,7 @@ class Evaluator:
             print('TESTTEST')
 
             for unique_class in unique_classes:
+                print('unique class {}'.format(unique_class))
                 # If no preds exist
                 if len(per_class_preds) == 0:
                     true_negs[unique_class] = 0
