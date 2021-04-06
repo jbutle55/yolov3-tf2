@@ -282,11 +282,14 @@ class Evaluator:
                             detected_boxes.append(iPred)  # Append index of gt boxes not coords
                             detected_classes.append(pred_classes[iPred])
 
-                            print('Predicted')
-
                             per_class_preds[pred_label] += 1
 
             unique_classes = np.unique(self.target_classes)
+
+            total_objs = 0
+            for unique_class in unique_classes:
+                total_objs += number_each_class[unique_class]
+            print(total_objs)
 
             print('TEST')
             print(number_each_class)
@@ -294,9 +297,14 @@ class Evaluator:
             print('TESTTEST')
 
             for unique_class in unique_classes:
-                unique_class = int(unique_class)
+                # If preds exist: continue
+                if len(per_class_preds[unique_class]) == 0:
+                    continue
+
+                unique_class = unique_class
                 print(unique_class)
-                true_negs[unique_class] = number_each_class[unique_class] - per_class_preds[unique_class]
+
+                true_negs[unique_class] = total_objs - per_class_preds[unique_class]
                 print(number_each_class)
                 print(true_negs)
 
