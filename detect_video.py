@@ -1,62 +1,83 @@
 import time
-from absl import app, flags, logging
-from absl.flags import FLAGS
+from absl import logging
 import cv2
 import tensorflow as tf
-from yolov3_tf2.models import (
-    YoloV3, YoloV3Tiny
-)
+from yolov3_tf2.models import  YoloV3
 from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs
 
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras.models import Model
+import numpy as np
+import argparse
 
-flags.DEFINE_string('classes', './data/coco.names', 'path to classes file')
-flags.DEFINE_string('weights', './checkpoints/yolov3.tf',
-                    'path to weights file')
-flags.DEFINE_boolean('tiny', False, 'yolov3 or yolov3-tiny')
-flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/video.mp4',
-                    'path to video file or number for webcam)')
-flags.DEFINE_string('output', None, 'path to output video')
-flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
-flags.DEFINE_integer('num_classes', 80, 'number of classes in the model')
+classes_path = 'coco.names'
+weights = '/checkpoints/yolov3_608.tf'
+tiny = False
+size = 608
+num_classes = 80
+output = 'MFOV-EOW-70conf.avi'  # Path to output video
+output_format = 'XVID'
+# output_format = 'MJPG'
+viz_feat_map = False
 
 
-def main(_argv):
+
+def main(args):
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     for physical_device in physical_devices:
         tf.config.experimental.set_memory_growth(physical_device, True)
 
-    if FLAGS.tiny:
-        yolo = YoloV3Tiny(classes=FLAGS.num_classes)
-    else:
-        yolo = YoloV3(classes=FLAGS.num_classes)
+    video = args.video
 
-    yolo.load_weights(FLAGS.weights)
+    yolo = YoloV3(classes=num_classes)
+
+    yolo.load_weights(weights)
     logging.info('weights loaded')
 
-    class_names = [c.strip() for c in open(FLAGS.classes).readlines()]
+    class_names = [c.strip() for c in open(classes_path).readlines()]
     logging.info('classes loaded')
+
+    if args.roi_layer:
+        layer_name = ''
+        layer_model = Model(inputs=yolo.input,
+                            outputs=yolo.get_layer(layer_name).output)
+
+    if args.debug_model:
+        yolo.summary()
+
+        for i in range(len(yolo.layers)):
+            layer = yolo.layers[i]
+            #if 'conv' not in layer.name:
+            #    continue
+            print(i, layer.name, layer.output_shape)
 
     times = []
 
     try:
-        vid = cv2.VideoCapture(int(FLAGS.video))
+        vid = cv2.VideoCapture(int(video))
     except:
-        vid = cv2.VideoCapture(FLAGS.video)
+        vid = cv2.VideoCapture(video)
 
-    out = None
+    if viz_feat_map:
+        #feat_model = tf.keras.Model(inputs=yolo.layers[1].inputs, outputs=yolo.layers[1].outputs)
+        feat_model = tf.keras.Model(inputs=yolo.layers[1].outputs, outputs=yolo.layers[3].outputs)
+        feat_model.summary()
 
-    if FLAGS.output:
+    if output:
         # by default VideoCapture returns float instead of int
         width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(vid.get(cv2.CAP_PROP_FPS))
-        codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
-        out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
+        codec = cv2.VideoWriter_fourcc(*output_format)
+        out = cv2.VideoWriter(output, codec, fps, (width, height))
 
-    while True:
-        _, img = vid.read()
+    count = 0
+    success = True
+    while success:
+        success, img = vid.read()
+
+        print('Frame: {}'. format(count))
 
         if img is None:
             logging.warning("Empty Frame")
@@ -65,7 +86,18 @@ def main(_argv):
 
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_in = tf.expand_dims(img_in, 0)
-        img_in = transform_images(img_in, FLAGS.size)
+        img_in = transform_images(img_in, size)
+
+        if viz_feat_map:
+            feat_maps = feat_model.predict(img_in)
+            test = feat_maps[0][:, :, :, 0]
+            test2 = np.uint8(test[0])
+            out.write(test2)
+            #cv2.imshow('output', test2)
+            if cv2.waitKey(1) == ord('q'):
+                break
+            count = count + 1
+            continue
 
         t1 = time.time()
         boxes, scores, classes, nums = yolo.predict(img_in)
@@ -76,17 +108,21 @@ def main(_argv):
         img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
         img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
-        if FLAGS.output:
+        if output:
             out.write(img)
         cv2.imshow('output', img)
         if cv2.waitKey(1) == ord('q'):
             break
 
+        count = count + 1
+
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
-    try:
-        app.run(main)
-    except SystemExit:
-        pass
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--video')
+    parser.add_argument('--debug_model', action='store_true')
+    parser.add_argument('--roi_layer', action='store_true')
+    arguments = parser.parse_args()
+    main(arguments)
