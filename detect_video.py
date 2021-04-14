@@ -16,11 +16,10 @@ weights = '/home/justin/Models/yolov3-tf2/checkpoints/yolov3_608.tf'
 tiny = False
 size = 608
 num_classes = 80
-output = 'MFOV-EOW-70conf.avi'  # Path to output video
+output = 'test-out.avi'  # Path to output video
 output_format = 'XVID'
 # output_format = 'MJPG'
 viz_feat_map = False
-
 
 
 def main(args):
@@ -110,7 +109,7 @@ def main(args):
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         if output:
             out.write(img)
-        cv2.imshow('output', img)
+        #cv2.imshow('output', img)
         if cv2.waitKey(1) == ord('q'):
             break
 
