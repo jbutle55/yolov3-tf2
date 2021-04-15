@@ -2,7 +2,7 @@ import time
 from absl import logging
 import cv2
 import tensorflow as tf
-from yolov3_tf2.models import  YoloV3
+from yolov3_tf2.models import  YoloV3, Darknet
 from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs
 
@@ -43,7 +43,7 @@ def main(args):
 
     if args.roi_layer:
         layer_name = 'yolo_darknet'
-        layer_model = Model(inputs=yolo.inputs, outputs=yolo.get_layer(layer_name).outputs)
+        layer_model = Darknet(name='yolo_darknet')
         yolo = layer_model
 
         for i in range(len(yolo.layers)):
