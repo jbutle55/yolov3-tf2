@@ -85,7 +85,11 @@ def main(args):
         img_in = transform_images(img_in, size)
 
         t1 = time.time()
-        boxes, scores, classes, nums = yolo.predict(img_in)
+        if args.roi_layer:
+            small, medium, large = yolo.predict(img_in)
+            print(small.shape)
+        else:
+            boxes, scores, classes, nums = yolo.predict(img_in)
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]
