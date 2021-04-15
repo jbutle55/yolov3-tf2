@@ -88,13 +88,14 @@ def main(args):
         if args.roi_layer:
             small, medium, large = yolo.predict(img_in)
             print(small.shape)
+
         else:
             boxes, scores, classes, nums = yolo.predict(img_in)
         t2 = time.time()
         times.append(t2-t1)
         times = times[-20:]
 
-        img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
+        img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0.5)
         img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         if output:
