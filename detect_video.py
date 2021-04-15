@@ -38,14 +38,13 @@ def main(args):
     class_names = [c.strip() for c in open(classes_path).readlines()]
     logging.info('classes loaded')
 
-    if args.roi_layer:
-        layer_name = 'yolo_darknet'
-        layer_model = Model(inputs=yolo.input,
-                            outputs=yolo.get_layer(layer_name).output)
-        yolo = layer_model
-
     if args.debug_model:
         yolo.summary()
+
+    if args.roi_layer:
+        layer_name = 'yolo_darknet'
+        layer_model = Model(inputs=yolo.inputs, outputs=yolo.get_layer(layer_name).outputs)
+        yolo = layer_model
 
         for i in range(len(yolo.layers)):
             layer = yolo.layers[i]
