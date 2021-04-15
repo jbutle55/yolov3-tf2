@@ -28,6 +28,7 @@ def main(args):
         tf.config.experimental.set_memory_growth(physical_device, True)
 
     video = args.video
+    output = args.output
 
     yolo = YoloV3(classes=num_classes)
 
@@ -38,9 +39,10 @@ def main(args):
     logging.info('classes loaded')
 
     if args.roi_layer:
-        layer_name = ''
+        layer_name = 'yolo_darknet'
         layer_model = Model(inputs=yolo.input,
                             outputs=yolo.get_layer(layer_name).output)
+        yolo = layer_model
 
     if args.debug_model:
         yolo.summary()
@@ -57,11 +59,6 @@ def main(args):
         vid = cv2.VideoCapture(int(video))
     except:
         vid = cv2.VideoCapture(video)
-
-    if viz_feat_map:
-        #feat_model = tf.keras.Model(inputs=yolo.layers[1].inputs, outputs=yolo.layers[1].outputs)
-        feat_model = tf.keras.Model(inputs=yolo.layers[1].outputs, outputs=yolo.layers[3].outputs)
-        feat_model.summary()
 
     if output:
         # by default VideoCapture returns float instead of int
@@ -86,17 +83,6 @@ def main(args):
         img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_in = tf.expand_dims(img_in, 0)
         img_in = transform_images(img_in, size)
-
-        if viz_feat_map:
-            feat_maps = feat_model.predict(img_in)
-            test = feat_maps[0][:, :, :, 0]
-            test2 = np.uint8(test[0])
-            out.write(test2)
-            #cv2.imshow('output', test2)
-            if cv2.waitKey(1) == ord('q'):
-                break
-            count = count + 1
-            continue
 
         t1 = time.time()
         boxes, scores, classes, nums = yolo.predict(img_in)
@@ -123,5 +109,6 @@ if __name__ == '__main__':
     parser.add_argument('--video')
     parser.add_argument('--debug_model', action='store_true')
     parser.add_argument('--roi_layer', action='store_true')
+    parser.add_argument('--output')
     arguments = parser.parse_args()
     main(arguments)
