@@ -44,6 +44,7 @@ def main(args):
     if args.roi_layer:
         layer_name = 'yolo_darknet'
         layer_model = Darknet(name='yolo_darknet')
+        layer_model.load_weights(weights, by_name=True)
         yolo = layer_model
 
         for i in range(len(yolo.layers)):
