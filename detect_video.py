@@ -233,5 +233,6 @@ if __name__ == '__main__':
     parser.add_argument('--debug_model', action='store_true')
     parser.add_argument('--roi_layer', action='store_true')
     parser.add_argument('--output')
+    parser.add_argument('--roc', action='store_true')
     arguments = parser.parse_args()
     main(arguments)
