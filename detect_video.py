@@ -13,7 +13,7 @@ import argparse
 
 classes_path = 'coco.names'
 weights = '/home/justin/Models/yolov3-tf2/checkpoints/yolov3_608.tf'
-weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3_608.tf'
+# weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3_608.tf'
 tiny = False
 size = 608
 num_classes = 80
