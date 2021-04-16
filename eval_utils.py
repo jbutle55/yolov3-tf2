@@ -50,8 +50,8 @@ class Evaluator:
         # targets?
 
         # Pass gts in form [num_imgs x 3 x [img no., class, x1, y1, x2, y2]]
-        metrics = self.calc_batch_stats(outputs, ground_truths, debug_images)
-        # Returns [true_positives, pred_scores, pred_classes, per_class_true_pos]
+        metrics = self.calc_batch_stats(outputs, ground_truths)
+        # Returns [true_positives, pred_scores, pred_classes]
 
         self.true_positives, self.pred_scores, self.pred_classes = [np.concatenate(x, 0) for x in list(zip(*metrics))]
         # Flatten target classes list
@@ -60,6 +60,10 @@ class Evaluator:
         self.calcMeanAveragePrecision_perClass()
 
         self.display_results()
+
+        tprs, fprs = self.calc_true_negatives(outputs, ground_truths)
+
+        self.roc_curve(tprs, fprs)
 
         return
 
@@ -187,21 +191,125 @@ class Evaluator:
 
         return x1, y1, x2, y2
 
-    def calc_true_negatives(self, img_annots, pred_boxes, pred_classes):
-        # Accept annots and preds for single image
-        per_class_true_negs = {}
+    def roc_curve(self, tprsm, fprs):
 
-        unique_classes = list(set(self.target_classes))
-        num_objects = len(img_annots)
+        return
 
-        # Check true negatives for each class
-        for single_class in unique_classes:
-             # The single class is the TRUE POSITIVE class
-             true_negative_count = 0
+    def calc_true_negatives(self, preds, gts):
+        metrics = []
 
-        return per_class_true_negs
+        # Count of each stat with len(num-images)
+        true_pos_count = []
+        false_pos_count = []
+        true_neg_count = []
+        false_neg_count = []
+        class_tested = []
 
-    def calc_batch_stats(self, preds, gts, images=None):
+        unique_classes = None
+
+        for iImg, outputs in enumerate(preds):
+            # Complete loop for each image
+
+            pred_boxes = outputs[:, :4]
+            pred_scores = outputs[:, 4]
+            pred_classes = outputs[:, 5]
+
+            # Get annotations for the image
+            annotations = gts[iImg]
+            # Get the target class labels
+            target_labels = []  # Should finish with shape [class, class, ...]
+            for scale in annotations:
+                for annot in scale:
+                    target_labels.append(annot[-1])
+
+            unique_classes = Counter(target_labels)
+
+            true_positives = 0
+            false_positives = 0
+            true_negatives = 0
+            false_negatives = 0
+
+            if len(annotations):
+                for single_class in unique_classes:
+                    class_tested.append(single_class)
+
+                    detected_boxes = []
+                    target_boxes = []  # Should finish with shape [3 x [x1,y1,x2,y2]]
+                    # Get the target bboxes
+                    for scale in annotations:
+                        for annot in scale:
+                            if len(annot):
+                                target_boxes.append(annot[:4])
+                            else:
+                                target_boxes.append([])
+
+                    for iPred, (pred_box, pred_label) in enumerate(zip(pred_boxes, pred_classes)):
+
+                        # iBox is index of gt box with max iou
+                        iou, iBox = self.calc_bbox_iou(
+                            pred_box, target_boxes)
+
+                        if iou >= self.iou_threshold and iBox not in detected_boxes:
+                            # Means box overlaps real object
+                            if pred_label == single_class:
+                                # Either True or False Positive
+                                if pred_label == target_labels[iBox]:
+                                    # Record the prediction as TP
+                                    true_positives += 1
+
+                                else:
+                                    # False Positive
+                                    false_positives += 1
+
+                            else:
+                                # Pred label != single class
+                                # Either True or False Negative
+                                if pred_label == target_labels[iBox]:
+                                    # True Negative
+                                    true_negatives += 1
+
+                                else:
+                                    # False Negative
+                                    false_negatives += 1
+
+                            detected_boxes.append(iBox)
+
+            # Append for each class, for each image
+            true_pos_count.append(true_positives)
+            false_pos_count.append(false_positives)
+            true_neg_count.append(true_negatives)
+            false_neg_count.append(false_negatives)
+
+        tprs = {}
+        fprs = {}
+
+        # Calculate TPR and FPR
+        for ind_class in unique_classes:
+            # Get indices of when ind_class in class_tested
+            indices = [index for index, item in enumerate(class_tested) if item == ind_class]
+            tp_value = sum([true_positives[i] for i in indices])
+            fp_value = sum([false_positives[i] for i in indices])
+            tn_value = sum([true_negatives[i] for i in indices])
+            fn_value = sum([false_negatives[i] for i in indices])
+
+            if tp_value == 0:
+                tpr = 0
+            else:
+                tpr = tp_value / (tp_value + fn_value)
+
+            if fp_value == 0:
+                fpr = 0
+            else:
+                fpr = fp_value / (fp_value + tn_value)
+
+            tprs[ind_class] = tpr
+            fprs[ind_class] = fpr
+
+            print(f'Class: {ind_class}, TPR: {tpr}, FPR: {fpr}')
+
+        return [tprs, fprs]
+
+    def calc_batch_stats(self, preds, gts):
         """[summary]
 
         Args:
@@ -241,8 +349,6 @@ class Evaluator:
 
             self.target_classes.append(target_labels)
 
-            number_each_class = Counter(target_labels)
-
             if len(annotations):
                 detected_boxes = []
                 detected_classes = []
@@ -273,7 +379,7 @@ class Evaluator:
                         pred_box, target_boxes)
                     
                     # Ensure only GTs of class in question are used
-                    #match = (target_labels == pred_label) & (iou >= self.iou_threshold)
+                    match = (target_labels == pred_label) & (iou >= self.iou_threshold)
                     
                     if iou >= self.iou_threshold and iBox not in detected_boxes:
                         if pred_label == target_labels[iBox]:
@@ -282,58 +388,7 @@ class Evaluator:
                             detected_boxes.append(iPred)  # Append index of gt boxes not coords
                             detected_classes.append(pred_classes[iPred])
 
-                            per_class_preds[pred_label] += 1
-
-            unique_classes = np.unique(self.target_classes)
-            print(f'target classes - {self.target_classes}')
-            print('unique classes - {}'.format(unique_classes))
-
-            total_objs = 0
-            for unique_class in unique_classes:
-                print('class - {}'.format(unique_class))
-                print('Number each class')
-                print('{} - {}'.format(unique_class, number_each_class[unique_class]))
-                total_objs += number_each_class[unique_class]
-            print('Total {}'.format(total_objs))
-
-            print('TEST')
-            print(number_each_class)
-            print(per_class_preds)
-            print('TESTTEST')
-
-            for unique_class in unique_classes:
-                print('unique class {}'.format(unique_class))
-                # If no preds exist
-                if len(per_class_preds) == 0:
-                    true_negs[unique_class] = 0
-                    continue
-
-                unique_class = unique_class
-                print(unique_class)
-
-                true_negs[unique_class] = total_objs - per_class_preds[unique_class]
-                print(number_each_class)
-                print(true_negs)
-
-            #metrics.append([true_positives, pred_scores, pred_classes])
-            metrics.append([true_positives, pred_scores, pred_classes, true_negs])
-
-            self.false_pos_count.append(false_pos_count)
-
-            # Dubugging print image code
-            detected_img = [pred_boxes[i] for i in detected_boxes]
-            if images is not None:
-                plt.imshow(images[iImg])
-                ax = plt.gca()
-
-                for pred, label in zip(detected_img, detected_classes):
-                    width = abs(pred[2] - pred[0])
-                    height = abs(pred[3] - pred[1])
-                    rect = patches.Rectangle((pred[0], pred[1]), width, height, linewidth=1, edgecolor='r', facecolor='none')
-                    ax.add_patch(rect)
-                    plt.text(pred[0], pred[1], label)
-
-                plt.show()
+            metrics.append([true_positives, pred_scores, pred_classes])
 
         return metrics
 
