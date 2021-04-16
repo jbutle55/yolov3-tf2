@@ -224,7 +224,7 @@ def main(args):
         print(f'FP Rates: {all_fp_rates}')
 
         # Plot roc curves
-        utils.compute_roc_curve(all_tp_rates, all_fp_rates, save_fig=True)
+        # utils.compute_roc_curve(all_tp_rates, all_fp_rates, save_fig=True)
 
 
 if __name__ == '__main__':
