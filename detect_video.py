@@ -117,6 +117,6 @@ if __name__ == '__main__':
     parser.add_argument('--output')
     parser.add_argument('--roc', action='store_true')
     parser.add_argument('--weights', default='/home/justin/Models/yolov3-tf2/checkpoints/yolov3.tf')
-    parser.add_argument('--thresh', default=0.5, type=int)
+    parser.add_argument('--thresh', default=0.5, type=float)
     arguments = parser.parse_args()
     main(arguments)
