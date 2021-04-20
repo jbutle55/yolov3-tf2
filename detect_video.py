@@ -11,10 +11,10 @@ from tensorflow.keras.models import Model
 import numpy as np
 import argparse
 
-classes_path = 'coco.names'
+classes_path = 'aerial.names'
 tiny = False
 size = 1024
-num_classes = 80
+num_classes = 8
 output = 'test-out.avi'  # Path to output video
 output_format = 'XVID'
 # output_format = 'MJPG'
