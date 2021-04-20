@@ -45,7 +45,8 @@ def main(args):
                       'fine_tune: Transfer all and freeze darknet only'),
                       'pre': Use a pre-trained model for validation
     '''
-    image_size = 416  # 416
+    image_size = 1024  # 416
+
     num_epochs = args.epochs
     batch_size = args.batch_size
     learning_rate = 1e-3
@@ -57,8 +58,11 @@ def main(args):
     saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_{}.tf'.format(num_epochs)
     saved_weights_path = args.saved_weights
 
-    anchors = yolo_anchors
-    anchor_masks = yolo_anchor_masks
+    anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
+                        (59, 119), (116, 90), (156, 198), (373, 326)],
+                       np.float32) / 1024
+    anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
+
 
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     for physical_device in physical_devices:
