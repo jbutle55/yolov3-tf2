@@ -11,10 +11,10 @@ from tensorflow.keras.models import Model
 import numpy as np
 import argparse
 
-classes_path = 'aerial.names'
+classes_path = 'coco.names'
 tiny = False
 size = 1024
-num_classes = 8
+num_classes = 80
 output = 'test-out.avi'  # Path to output video
 output_format = 'XVID'
 # output_format = 'MJPG'
@@ -95,7 +95,7 @@ def main(args):
         times.append(t2-t1)
         times = times[-20:]
 
-        img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0.0)
+        img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=args.thresh)
         img = cv2.putText(img, "Time: {:.2f}ms".format(sum(times)/len(times)*1000), (0, 30),
                           cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
         if output:
@@ -117,5 +117,6 @@ if __name__ == '__main__':
     parser.add_argument('--output')
     parser.add_argument('--roc', action='store_true')
     parser.add_argument('--weights', default='/home/justin/Models/yolov3-tf2/checkpoints/yolov3.tf')
+    parser.add_argument('--thresh', default=0.5)
     arguments = parser.parse_args()
     main(arguments)
