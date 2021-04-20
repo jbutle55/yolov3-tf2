@@ -32,7 +32,7 @@ def main(args):
 
     yolo = YoloV3(classes=num_classes)
 
-    yolo.load_weights(weights)
+    yolo.load_weights(weights).expect_partial()
     logging.info('weights loaded')
 
     class_names = [c.strip() for c in open(classes_path).readlines()]
