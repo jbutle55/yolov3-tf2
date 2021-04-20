@@ -12,9 +12,6 @@ import numpy as np
 import argparse
 
 classes_path = 'coco.names'
-weights = '/home/justin/Models/yolov3-tf2/checkpoints/yolov3_608.tf'
-weights = args.weights
-# weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3_608.tf'
 tiny = False
 size = 1024
 num_classes = 80
@@ -31,6 +28,7 @@ def main(args):
 
     video = args.video
     output = args.output
+    weights = args.weights
 
     yolo = YoloV3(classes=num_classes)
 
