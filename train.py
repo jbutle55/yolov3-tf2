@@ -185,7 +185,7 @@ def main(args):
             callbacks = [
                 ReduceLROnPlateau(verbose=1),
                 # EarlyStopping(patience=3, verbose=1),
-                ModelCheckpoint('checkpoints/yolov3_train_{epoch}.tf',
+                ModelCheckpoint('checkpoints/midpoints/yolov3_train_{epoch}.tf',
                                 verbose=1, save_weights_only=True),
                 TensorBoard(log_dir='logs')
             ]
