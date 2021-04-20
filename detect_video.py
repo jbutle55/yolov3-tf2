@@ -13,6 +13,7 @@ import argparse
 
 classes_path = 'coco.names'
 weights = '/home/justin/Models/yolov3-tf2/checkpoints/yolov3_608.tf'
+weights = args.weights
 # weights = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/yolov3-tf2/checkpoints/yolov3_608.tf'
 tiny = False
 size = 1024
@@ -117,5 +118,6 @@ if __name__ == '__main__':
     parser.add_argument('--roi_layer', action='store_true')
     parser.add_argument('--output')
     parser.add_argument('--roc', action='store_true')
+    parser.add_argument('--weights', default='/home/justin/Models/yolov3-tf2/checkpoints/yolov3.tf')
     arguments = parser.parse_args()
     main(arguments)
