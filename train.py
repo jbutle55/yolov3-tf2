@@ -193,7 +193,7 @@ def main(args):
                                 epochs=num_epochs,
                                 callbacks=callbacks,
                                 validation_data=val_dataset)
-
+            print(f'Saving weights to: {saved_weights_path}')
             model.save_weights(saved_weights_path)
         finish_time = time.time()
         train_time = finish_time - start_time
