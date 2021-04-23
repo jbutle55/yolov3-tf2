@@ -6,16 +6,12 @@ from yolov3_tf2.models import  YoloV3, Darknet
 from yolov3_tf2.dataset import transform_images
 from yolov3_tf2.utils import draw_outputs
 
-from tensorflow.keras.applications import VGG16
-from tensorflow.keras.models import Model
-import numpy as np
 import argparse
 
-classes_path = 'coco.names'
+classes_path = 'aerial.names'
 tiny = False
 size = 1024
-num_classes = 80
-output = 'test-out.avi'  # Path to output video
+num_classes = 8
 output_format = 'XVID'
 # output_format = 'MJPG'
 viz_feat_map = False
