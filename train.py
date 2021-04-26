@@ -61,6 +61,7 @@ def main(args):
     anchors = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
                          (984, 1140), (1070, 1370)], np.float32) / 1024
 
+    # Original Anchors below
     anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
                              (59, 119), (116, 90), (156, 198), (373, 326)],
                             np.float32) / 1024
@@ -277,38 +278,53 @@ def main(args):
 
         evaluator(predictions, filtered_labels, images)  # Check gts box coords
 
-    mode = args.valid_imgs
-    if mode is True:
+    if args.valid_imgs:
+
+        yolo = YoloV3(classes=num_classes)
+        yolo.load_weights(saved_weights_path).expect_partial()
+        print('weights loaded')
+
         print('Validation Image...')
         # Find better way to do this so not requiring manual changes
         class_dict = {0: 'car', 1: 'bus', 2: 'truck', 3: 'person',
                       4: 'bicycle', 5: 'motorbike', 6: 'train',
                       7: 'building', 8: 'traffic light'}
-        output = '/Users/justinbutler/Desktop/test/tiny_test/test.jpg'  # Path to output image
+
+        class_dict = {
+            u'car': 1,
+            u'bus': 2,
+            u'person': 3,
+            u'traffic light': 4,
+            u'motorbike': 5,
+            u'building': 6,
+            u'truck': 7,
+            u'train': 8,
+        }
+
+        num_images = 5
 
         class_names = list(class_dict.values())
         print('classes loaded')
 
-        for img in val_dataset:
-            test2.append(img)
-
         # boxes, scores, classes, num_detections
         index = 0
-        for img in val_dataset:
-            image = img[0][0]
-            output = '/Users/justinbutler/Desktop/test/tiny_test/test_{}.jpg'.format(index)
+        for img_raw, _label in val_dataset.take(num_images):
 
-            # image has values between 0 and 1
-            image = image * 255
+            img = tf.expand_dims(img_raw, 0)
+            img = transform_images(img, image_size)
+
+            boxes, scores, classes, nums = yolo(img)
+
+            output = 'test_images/test_{}.jpg'.format(index)
 
             print('detections:')
-            for i in range(num_detections[index]):
+            for i in range(nums[index]):
                 print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
                                             np.array(scores[index][i]),
                                             np.array(boxes[index][i])))
 
-            img = cv2.cvtColor(image.numpy(), cv2.COLOR_RGB2BGR)
-            img = draw_outputs(img, (boxes[index], scores[index], classes[index], num_detections[index]), class_names)
+            img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
+            img = draw_outputs(img, (boxes[index], scores[index], classes[index], nums[index]), class_names)
             cv2.imwrite(output, img)
 
             index = index + 1
