@@ -312,9 +312,9 @@ def main(args):
 
         # boxes, scores, classes, num_detections
         index = 0
-        for img_raw, _label in val_dataset.take(num_images):
+        for img_raw, _label in val_dataset.take(1):
 
-            print(img_raw)
+            print(img_raw.shape)
 
             # First image of batch
             img_raw = img_raw[0]
