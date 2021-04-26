@@ -327,23 +327,28 @@ def main(args):
             # _label = _label[0]
 
             # img = tf.expand_dims(img_raw, 0)
-            img = transform_images(img_raw, image_size)
+            img = cv2.cvtColor(img[0].numpy(), cv2.COLOR_RGB2BGR)
+            # img = transform_images(img_raw, image_size)
 
             print(img.shape)
+            print(img)
 
             boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
 
-            # print('detections:')
-            # for i in range(nums[index]):
-            #   print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
-            #                               np.array(scores[index][i]),
-            #                               np.array(boxes[index][i])))
-            test = img.numpy()
-            print(f'output: {test.shape}')
-            img = cv2.cvtColor(img[0].numpy(), cv2.COLOR_RGB2BGR)
+            print('detections:')
+            for i in range(nums[index]):
+                print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
+                                          np.array(scores[index][i]),
+                                          np.array(boxes[index][i])))
+                if i > 10:
+                    continue
+
+
             print(f'output: {img.shape}')
+            #img = cv2.cvtColor(img[0].numpy(), cv2.COLOR_RGB2BGR)
+            #print(f'output: {img.shape}')
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
             print(f'output: {img.shape}')
             cv2.imwrite(output, img)
