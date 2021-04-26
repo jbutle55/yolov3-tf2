@@ -1,21 +1,12 @@
+Class bicycle - AP: 0.0 
+True Positives - [0.0, 0.0, 0.0, 0.0]
+ False Positives - [111.0, 409.0, 85.0, 377.0]
+
 Class car - AP: 0.0 
-True Positives - 2
- False Positives - 2
+True Positives - [0.0, 0.0, 0.0, 0.0]
+ False Positives - [111.0, 409.0, 85.0, 377.0]
 
-Class bus - AP: 0.0 
-True Positives - 2
- False Positives - 2
+Class airplane - AP: 0.0 
+True Positives - [0.0, 0.0, 0.0, 0.0]
+ False Positives - [111.0, 409.0, 85.0, 377.0]
 
-Class train - AP: 0.0 
-True Positives - 2
- False Positives - 2
-
-Class building - AP: 0.027927126347198128 
-True Positives - 2
- False Positives - 2
-
-Class traffic light - AP: 0.0 
-True Positives - 2
- False Positives - 2
-
-mAP: 0.005585425269439626
