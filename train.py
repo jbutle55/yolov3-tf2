@@ -308,9 +308,13 @@ def main(args):
         class_names = list(class_dict.values())
         print('classes loaded')
 
+        val_dataset.batch(1)
+
         # boxes, scores, classes, num_detections
         index = 0
         for img_raw, _label in val_dataset.take(num_images):
+
+            print(img_raw)
 
             # First image of batch
             img_raw = img_raw[0]
@@ -326,10 +330,10 @@ def main(args):
             output = 'test_images/test_{}.jpg'.format(index)
 
             print('detections:')
-            for i in range(nums[index]):
-                print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
-                                            np.array(scores[index][i]),
-                                            np.array(boxes[index][i])))
+            # for i in range(nums[index]):
+            #   print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
+            #                               np.array(scores[index][i]),
+            #                               np.array(boxes[index][i])))
 
             img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
             img = draw_outputs(img, (boxes[index], scores[index], classes[index], nums[index]), class_names)
