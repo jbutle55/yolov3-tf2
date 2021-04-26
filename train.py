@@ -314,13 +314,12 @@ def main(args):
         index = 0
         for img_raw, _label in val_dataset.take(1):
 
-            print(img_raw.shape)
-
             # First image of batch
             img_raw = img_raw[0]
             _label = _label[0]
 
             print(img_raw.shape)
+            print(f'index {index}')
 
             img = tf.expand_dims(img_raw, 0)
             img = transform_images(img, image_size)
@@ -338,7 +337,7 @@ def main(args):
             #                               np.array(boxes[index][i])))
 
             img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
-            img = draw_outputs(img, (boxes[index], scores[index], classes[index], nums[index]), class_names)
+            img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
             cv2.imwrite(output, img)
 
             index = index + 1
