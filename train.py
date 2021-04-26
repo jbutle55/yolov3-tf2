@@ -60,12 +60,12 @@ def main(args):
     saved_weights_path = args.saved_weights
 
     anchors = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
-                         (984, 1140), (1070, 1370)], np.float32) / 1024
+                         (984, 1140), (1070, 1370)], np.float32) / 416
 
     # Original Anchors below
     anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
                              (59, 119), (116, 90), (156, 198), (373, 326)],
-                            np.float32) / 1024
+                            np.float32) / 416
 
     anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
 
@@ -326,11 +326,10 @@ def main(args):
 
             img = img * 255
 
-
             boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
-            #output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
+            output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
 
             # print('detections:')
             # for i in range(nums[index]):
@@ -339,7 +338,6 @@ def main(args):
             #                               np.array(boxes[index][i])))
             #     if i > 10:
             #         continue
-
 
             img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
