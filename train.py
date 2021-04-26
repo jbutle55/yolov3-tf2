@@ -330,7 +330,7 @@ def main(args):
             boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
-            output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
+            #output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
 
             # print('detections:')
             # for i in range(nums[index]):
