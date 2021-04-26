@@ -312,8 +312,9 @@ def main(args):
         index = 0
         for img_raw, _label in val_dataset.take(num_images):
 
-            print(img_raw.shape)
-            print(_label.shape)
+            # First image of batch
+            img_raw = img_raw[0]
+            _label = _label[0]
 
             img = tf.expand_dims(img_raw, 0)
             img = transform_images(img, image_size)
