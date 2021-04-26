@@ -327,6 +327,8 @@ def main(args):
 
             boxes, scores, classes, nums = yolo(img)
 
+            print(boxes.shape)
+
             output = 'test_images/test_{}.jpg'.format(index)
 
             print('detections:')
