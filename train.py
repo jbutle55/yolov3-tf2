@@ -303,30 +303,26 @@ def main(args):
             u'train': 8,
         }
 
-        num_images = 5
-
         class_names = list(class_dict.values())
         print('classes loaded')
-
-        val_dataset.batch(1)
 
         # boxes, scores, classes, num_detections
         index = 0
         for img_raw, _label in val_dataset.take(5):
+            print(f'Index {index}')
+            print(img_raw.shape)
 
             # First image of batch
             img_raw = img_raw[0]
             _label = _label[0]
 
             print(img_raw.shape)
-            print(f'index {index}')
 
-            img = tf.expand_dims(img_raw, 0)
-            img = transform_images(img, image_size)
+            #img = tf.expand_dims(img_raw, 0)
+            #img = transform_images(img_raw, image_size)
 
-            boxes, scores, classes, nums = yolo(img)
+            boxes, scores, classes, nums = yolo(img_raw)
 
-            print(os.getcwd())
             output = 'test_images/test_{}.jpg'.format(index)
 
             # print('detections:')
