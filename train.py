@@ -12,6 +12,7 @@ import time
 from yolov3_tf2.dataset import transform_images, load_tfrecord_dataset
 from eval_utils import Evaluator
 import argparse
+import os
 import time
 
 print(tf.__version__)
@@ -199,6 +200,7 @@ def main(args):
                                 epochs=num_epochs,
                                 callbacks=callbacks,
                                 validation_data=val_dataset)
+            print(os.getcwd())
             print(f'Saving weights to: {saved_weights_path}')
             model.save_weights(saved_weights_path)
         finish_time = time.time()
