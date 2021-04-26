@@ -322,15 +322,15 @@ def main(args):
             print(img_raw.shape)
 
             # First image of batch
-            img_raw = img_raw[0]
-            _label = _label[0]
+            # img_raw = img_raw[0]
+            # _label = _label[0]
 
-            print(img_raw.shape)
-
-            img = tf.expand_dims(img_raw, 0)
+            # img = tf.expand_dims(img_raw, 0)
             img = transform_images(img_raw, image_size)
 
-            boxes, scores, classes, nums = yolo(img_raw)
+            print(img.shape)
+
+            boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
 
