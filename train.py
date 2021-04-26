@@ -46,7 +46,7 @@ def main(args):
                       'fine_tune: Transfer all and freeze darknet only'),
                       'pre': Use a pre-trained model for validation
     '''
-    image_size = 1024  # 416
+    image_size = 416  # 416
 
     num_epochs = args.epochs
     batch_size = args.batch_size
@@ -65,7 +65,7 @@ def main(args):
     # Original Anchors below
     anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
                              (59, 119), (116, 90), (156, 198), (373, 326)],
-                            np.float32) / 1024
+                            np.float32) / 416
 
     anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
 
@@ -320,40 +320,67 @@ def main(args):
         index = 0
         for img_raw, _label in val_dataset.take(5):
             print(f'Index {index}')
-            print(img_raw.shape)
 
-            # First image of batch
-            # img_raw = img_raw[0]
-            # _label = _label[0]
+            #img = tf.expand_dims(img_raw, 0)
+            img = transform_images(img_raw, image_size)
 
-            # img = tf.expand_dims(img_raw, 0)
-            img = cv2.cvtColor(img[0].numpy(), cv2.COLOR_RGB2BGR)
-            # img = transform_images(img_raw, image_size)
+            img = img * 255
 
-            print(img.shape)
-            print(img)
 
             boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
+            output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
 
-            print('detections:')
-            for i in range(nums[index]):
-                print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
-                                          np.array(scores[index][i]),
-                                          np.array(boxes[index][i])))
-                if i > 10:
-                    continue
+            # print('detections:')
+            # for i in range(nums[index]):
+            #     print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
+            #                               np.array(scores[index][i]),
+            #                               np.array(boxes[index][i])))
+            #     if i > 10:
+            #         continue
 
 
-            print(f'output: {img.shape}')
-            #img = cv2.cvtColor(img[0].numpy(), cv2.COLOR_RGB2BGR)
-            #print(f'output: {img.shape}')
-            img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
-            print(f'output: {img.shape}')
+            img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+            img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+            img = img * 255
             cv2.imwrite(output, img)
 
             index = index + 1
+
+        if args.visual_data:
+            val_dataset = dataset.load_tfrecord_dataset(valid_path,
+                                                        classes,
+                                                        image_size)
+            val_dataset = val_dataset.batch(1)
+            val_dataset = val_dataset.map(lambda x, y: (
+                dataset.transform_images(x, image_size),
+                dataset.transform_targets(y, anchors, anchor_masks, image_size)))
+
+            index = 0
+            for img_raw, _label in val_dataset.take(5):
+                print(f'Index {index}')
+                print(img_raw.shape)
+
+                # First image of batch
+                # img_raw = img_raw[0]
+                # _label = _label[0]
+
+                # img = tf.expand_dims(img_raw, 0)
+                img = transform_images(img_raw, image_size)
+
+                output = 'test_images/test_{}.jpg'.format(index)
+                output = '/Users/justinbutler/Desktop/test/test_images/test_labels_{}.jpg'.format(index)
+
+                print(f'output: {img.shape}')
+                img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                print(f'output: {img.shape}')
+                img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+                img = img * 255
+                print(f'output: {img.shape}')
+                cv2.imwrite(output, img)
+
+                index = index + 1
 
         return
 
@@ -377,6 +404,7 @@ if __name__ == "__main__":
     parser.add_argument('--saved_weights', default='/weights/trained_model.tf',
                         help='Also the model path for validation if running with no training.')
     parser.add_argument('--output_dir', help='')
+    parser.add_argument('--visual_data', action='store_true', default=False)
 
     args = parser.parse_args()
     main(args)
