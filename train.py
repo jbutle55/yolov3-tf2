@@ -316,6 +316,8 @@ def main(args):
             img_raw = img_raw[0]
             _label = _label[0]
 
+            print(img_raw.shape)
+
             img = tf.expand_dims(img_raw, 0)
             img = transform_images(img, image_size)
 
