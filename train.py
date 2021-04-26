@@ -282,7 +282,8 @@ def main(args):
 
     if args.valid_imgs:
 
-        yolo = YoloV3(classes=num_classes)
+        # yolo = YoloV3(classes=num_classes)
+        yolo = YoloV3(image_size, training=False, classes=num_classes)
         yolo.load_weights(saved_weights_path).expect_partial()
         print('weights loaded')
 
@@ -339,8 +340,10 @@ def main(args):
             #   print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
             #                               np.array(scores[index][i]),
             #                               np.array(boxes[index][i])))
-
+            test = img.numpy()
+            print(f'output: {test.shape}')
             img = cv2.cvtColor(img.numpy(), cv2.COLOR_RGB2BGR)
+            print(f'output: {img.shape}')
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
             print(f'output: {img.shape}')
             cv2.imwrite(output, img)
