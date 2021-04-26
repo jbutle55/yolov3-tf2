@@ -294,14 +294,14 @@ def main(args):
                       7: 'building', 8: 'traffic light'}
 
         class_dict = {
-            u'car': 1,
-            u'bus': 2,
-            u'person': 3,
-            u'traffic light': 4,
-            u'motorbike': 5,
-            u'building': 6,
-            u'truck': 7,
-            u'train': 8,
+            1: u'car',
+            2: u'bus',
+            3: u'person',
+            4: u'traffic light',
+            5: u'motorbike',
+            6: u'building',
+            7: u'truck',
+            8: u'train',
         }
 
         class_names = list(class_dict.values())
