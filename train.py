@@ -312,7 +312,7 @@ def main(args):
 
         # boxes, scores, classes, num_detections
         index = 0
-        for img_raw, _label in val_dataset.take(1):
+        for img_raw, _label in val_dataset.take(5):
 
             # First image of batch
             img_raw = img_raw[0]
@@ -329,7 +329,7 @@ def main(args):
             print(os.getcwd())
             output = 'test_images/test_{}.jpg'.format(index)
 
-            print('detections:')
+            # print('detections:')
             # for i in range(nums[index]):
             #   print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
             #                               np.array(scores[index][i]),
