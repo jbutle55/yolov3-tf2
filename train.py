@@ -306,6 +306,15 @@ def main(args):
         class_names = list(class_dict.values())
         print('classes loaded')
 
+        val_dataset = dataset.load_tfrecord_dataset(valid_path,
+                                                    classes,
+                                                    image_size)
+        val_dataset = val_dataset.batch(1)
+        val_dataset = val_dataset.map(lambda x, y: (
+            dataset.transform_images(x, image_size),
+            dataset.transform_targets(y, anchors, anchor_masks, image_size)))
+
+
         # boxes, scores, classes, num_detections
         index = 0
         for img_raw, _label in val_dataset.take(5):
@@ -318,8 +327,8 @@ def main(args):
 
             print(img_raw.shape)
 
-            #img = tf.expand_dims(img_raw, 0)
-            #img = transform_images(img_raw, image_size)
+            img = tf.expand_dims(img_raw, 0)
+            img = transform_images(img_raw, image_size)
 
             boxes, scores, classes, nums = yolo(img_raw)
 
