@@ -328,8 +328,6 @@ def main(args):
             # img = tf.expand_dims(img_raw, 0)
             img = transform_images(img_raw, image_size)
 
-            print(img.shape)
-
             boxes, scores, classes, nums = yolo(img)
 
             output = 'test_images/test_{}.jpg'.format(index)
@@ -340,7 +338,7 @@ def main(args):
             #                               np.array(scores[index][i]),
             #                               np.array(boxes[index][i])))
 
-            img = cv2.cvtColor(img_raw.numpy(), cv2.COLOR_RGB2BGR)
+            img = cv2.cvtColor(img.numpy(), cv2.COLOR_RGB2BGR)
             img = draw_outputs(img, (boxes, scores, classes, nums), class_names)
             cv2.imwrite(output, img)
 
