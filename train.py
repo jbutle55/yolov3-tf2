@@ -362,7 +362,7 @@ def main(args):
                 # img = tf.expand_dims(img_raw, 0)
                 img = transform_images(img_raw, image_size)
 
-                output = 'test_images/test_{}.jpg'.format(index)
+                output = 'test_images/test_labels_{}.jpg'.format(index)
                 # output = '/Users/justinbutler/Desktop/test/test_images/test_labels_{}.jpg'.format(index)
 
                 test = []
