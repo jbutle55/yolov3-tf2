@@ -300,7 +300,6 @@ def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
         # 5. calculate all losses
         xy_loss = obj_mask * box_loss_scale * \
             tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
-        print(f'xy: {xy_loss}')
         wh_loss = obj_mask * box_loss_scale * \
             tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
         obj_loss = binary_crossentropy(true_obj, pred_obj)

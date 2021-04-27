@@ -99,6 +99,15 @@ def main(args):
             dataset.transform_images(x, image_size),
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
+        print('TESTING')
+        filenames = ['/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/fixed_tf_aerial/coco_train.record-00000-of-00001']  # Replace here
+        raw_dataset = tf.data.TFRecordDataset(filenames)
+        for raw_record in raw_dataset.take(1):
+            example = tf.train.Example()
+            example.ParseFromString(raw_record.numpy())
+            print(example)
+
+
         # Configure the model for transfer learning
         if transfer == 'none':
             pass  # Nothing to do
@@ -200,7 +209,6 @@ def main(args):
                                 epochs=num_epochs,
                                 callbacks=callbacks,
                                 validation_data=val_dataset)
-            print(os.getcwd())
             print(f'Saving weights to: {saved_weights_path}')
             model.save_weights(saved_weights_path)
         finish_time = time.time()
