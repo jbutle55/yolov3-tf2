@@ -300,6 +300,7 @@ def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
         # 5. calculate all losses
         xy_loss = obj_mask * box_loss_scale * \
             tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
+        print(f'xy: {xy_loss}')
         wh_loss = obj_mask * box_loss_scale * \
             tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
         obj_loss = binary_crossentropy(true_obj, pred_obj)
@@ -311,13 +312,9 @@ def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
 
         # 6. sum over (batch, gridx, gridy, anchors) => (batch, 1)
         xy_loss = tf.reduce_sum(xy_loss, axis=(1, 2, 3))
-        print(f'xy: {xy_loss}')
         wh_loss = tf.reduce_sum(wh_loss, axis=(1, 2, 3))
-        print(f'wh: {wh_loss}')
         obj_loss = tf.reduce_sum(obj_loss, axis=(1, 2, 3))
-        print(f'obj: {obj_loss}')
         class_loss = tf.reduce_sum(class_loss, axis=(1, 2, 3))
-        print(f'class: {class_loss}')
 
         return xy_loss + wh_loss + obj_loss + class_loss
     return yolo_loss
