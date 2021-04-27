@@ -118,7 +118,6 @@ def parse_tfrecord(tfrecord, class_table, size):
                         labels], axis=1)
 
     paddings = [[0, yolo_max_boxes - tf.shape(y_train)[0]], [0, 0]]
-    print(paddings)
     y_train = tf.pad(y_train, paddings)
 
     return x_train, y_train
