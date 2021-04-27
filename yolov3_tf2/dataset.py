@@ -1,7 +1,7 @@
 import tensorflow as tf
 from absl.flags import FLAGS
 
-yolo_max_boxes = 100
+yolo_max_boxes = 300
 
 
 @tf.function
