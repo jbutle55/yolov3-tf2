@@ -100,7 +100,7 @@ def main(args):
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
         print('TESTING')
-        filenames = ['/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/fixed_tf_aerial/coco_train.record-00000-of-00001']  # Replace here
+        filenames = ['/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/fixed_tf_aerial/fixed_tf_aerial/coco_train.tfrecord-00000-of-00001']  # Replace here
         raw_dataset = tf.data.TFRecordDataset(filenames)
         for raw_record in raw_dataset.take(1):
             example = tf.train.Example()
