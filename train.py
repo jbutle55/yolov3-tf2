@@ -82,13 +82,14 @@ def main(args):
     saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_{}.tf'.format(num_epochs)
     saved_weights_path = args.saved_weights
 
-    anchors = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
-                         (984, 1140), (1070, 1370)], np.float32) / 608
+    # K-means divided by max width and height. Image size 608
+    anchors = np.array([(33, 38), (71, 40), (103, 44), (178, 56), (209, 146), (218, 161),  (249, 162),
+                         (450, 363), (486, 423)], np.float32) / 608
 
     # Original Anchors below
-    anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
-                             (59, 119), (116, 90), (156, 198), (373, 326)],
-                            np.float32) / 608
+    # anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
+    #                          (59, 119), (116, 90), (156, 198), (373, 326)],
+    #                         np.float32) / 608
 
     anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
 
