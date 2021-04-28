@@ -583,6 +583,7 @@ class Evaluator:
 
         print('Average Precisions: ')
         for i, c in enumerate(self.unique_classes):
+            print(f'i: {i}, c: {c}')
             print('Class {} - AP: {}'.format(class_dict[c+1], self.AP[i+1]))
             text_file.write('Class {} - AP: {} \n'.format(class_dict[c], self.AP[i]))
             text_file.write('True Positives - {}\n False Positives - {}\n\n'.format(self.true_positives_list,
