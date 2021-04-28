@@ -344,10 +344,9 @@ class Evaluator:
             # Get the target class labels
             target_labels = []  # Should finish with shape [class, class, ...]
             for scale in annotations:
-                print(f'scale: {scale}')
-                for annot in scale:
-                    print(f'annot: {annot}')
-                    target_labels.append(annot[-1])
+                # print(f'scale: {scale}')
+                # for annot in scale:
+                target_labels.append(scale[-1])
 
             self.target_classes.append(target_labels)
 
