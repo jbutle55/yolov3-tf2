@@ -19,6 +19,7 @@ print(tf.__version__)
 print(sys.version)
 
 
+# Flatten all labels and strip labels containing all 0's
 def flatten_labels(label):
     filt_labels = []
 
@@ -222,7 +223,7 @@ def main(args):
             model.compile(optimizer=optimizer, loss=loss,
                           run_eagerly=(mode == 'eager_fit'))
             callbacks = [
-                ReduceLROnPlateau(verbose=1),
+                #ReduceLROnPlateau(verbose=1),
                 # EarlyStopping(patience=3, verbose=1),
                 ModelCheckpoint('checkpoints/midpoints/yolov3_train_{epoch}.tf',
                                 verbose=1, save_weights_only=True),
@@ -269,13 +270,11 @@ def main(args):
         # boxes -> (num_imgs, num_detections, box coords)
 
         filtered_labels = []
-
         for _, label in val_dataset:
             filt_labels = flatten_labels(label)
             filtered_labels.append(filt_labels)
 
         # i is the num_images index
-        # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
         for img in range(len(num_detections)):
             row = []
             for sc in range(len(scores[img])):
