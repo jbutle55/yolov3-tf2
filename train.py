@@ -14,6 +14,7 @@ from eval_utils import Evaluator
 import argparse
 import os
 import time
+import config as cfg
 
 print(tf.__version__)
 print(sys.version)
@@ -70,7 +71,7 @@ def main(args):
                       'fine_tune: Transfer all and freeze darknet only'),
                       'pre': Use a pre-trained model for validation
     '''
-    image_size = 1024  # 416
+    image_size = cfg.IMAGE_SIZE
 
     num_epochs = args.epochs
     batch_size = args.batch_size
@@ -83,16 +84,14 @@ def main(args):
     saved_weights_path = '/home/justin/ml_models/yolov3-tf2/weights/trained_{}.tf'.format(num_epochs)
     saved_weights_path = args.saved_weights
 
-    # K-means divided by max width and height. Image size 608
-    anchors = np.array([(33, 38), (71, 40), (103, 44), (178, 56), (209, 146), (218, 161),  (249, 162),
-                         (450, 363), (486, 423)], np.float32) / 608
-
     # Original Anchors below
     anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
                              (59, 119), (116, 90), (156, 198), (373, 326)],
                             np.float32) / 608
 
-    anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
+    anchors = cfg.YOLO_ANCHORS
+
+    anchor_masks = cfg.YOLO_ANCHOR_MASKS
 
 
     physical_devices = tf.config.experimental.list_physical_devices('GPU')

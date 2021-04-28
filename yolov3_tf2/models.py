@@ -19,25 +19,18 @@ from tensorflow.keras.losses import (
     sparse_categorical_crossentropy
 )
 from .utils import broadcast_iou
+import config as cfg
 
-yolo_max_boxes = 300  # Max number of boxes per image
-yolo_iou_threshold = 0.5
-yolo_score_threshold = 0.1
+yolo_max_boxes = cfg.YOLO_MAX_BOXES # Max number of boxes per image
+yolo_iou_threshold = cfg.YOLO_IOU_THRESHOLD
+yolo_score_threshold = cfg.YOLO_SCORE_THRESHOLD
 
-yolo_anchors = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
-                         (984, 1140), (1070, 1370)],
-                        np.float32) / 608
+yolo_anchors = cfg.YOLO_ANCHORS
 
-yolo_anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
-                         (59, 119), (116, 90), (156, 198), (373, 326)],
-                        np.float32) / 608
+yolo_anchor_masks = cfg.YOLO_ANCHOR_MASKS
 
-yolo_anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
-
-yolo_tiny_anchors = np.array([(10, 14), (23, 27), (37, 58),
-                              (81, 82), (135, 169),  (344, 319)],
-                             np.float32) / 416
-yolo_tiny_anchor_masks = np.array([[3, 4, 5], [0, 1, 2]])
+yolo_tiny_anchors = cfg.YOLO_TINY_ANCHORS
+yolo_tiny_anchor_masks = cfg.YOLO_TINY_ANCHOR_MASKS
 
 
 def DarknetConv(x, filters, size, strides=1, batch_norm=True):
