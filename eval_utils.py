@@ -357,11 +357,11 @@ class Evaluator:
                 # TODO Shape of target_boxes might be wrong
                 # Get the target bboxes
                 for scale in annotations:
-                    for annot in scale:
-                        if len(annot):
-                            target_boxes.append(annot[:4])
-                        else:
-                            target_boxes.append([])
+                    #for annot in scale:
+                    if len(scale):
+                        target_boxes.append(scale[:4])
+                    else:
+                        target_boxes.append([])
 
                 false_pos_count = 0
                 for iPred, (pred_box, pred_label) in enumerate(zip(pred_boxes, pred_classes)):
