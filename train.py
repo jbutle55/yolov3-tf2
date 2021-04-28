@@ -19,6 +19,29 @@ print(tf.__version__)
 print(sys.version)
 
 
+def flatten_labels(label):
+    filt_labels = []
+
+    # Flatten all labels and remove 0s
+    for size in label:
+        for grid1 in size:
+            for grid2 in grid1:
+                for anchor in grid2:
+                    for a in anchor:
+                        if a[4] > 0:
+                            temp = [a[0],
+                                    a[1],
+                                    a[2],
+                                    a[3],
+                                    a[4],
+                                    a[5]]
+                            temp = [float(x) for x in temp]
+                            filt_labels.append(np.asarray(temp))
+    filt_labels = np.asarray(filt_labels)
+
+    return filt_labels
+
+
 def main(args):
     tf.config.experimental.list_physical_devices('GPU')
 
@@ -99,13 +122,13 @@ def main(args):
             dataset.transform_images(x, image_size),
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
-        print('TESTING')
-        filenames = ['/home/justin/Data/aerial-cars-private/aerial_yolo/fixed_tf_aerial/coco_train.tfrecord-00000-of-00001']  # Replace here
-        raw_dataset = tf.data.TFRecordDataset(filenames)
-        for raw_record in raw_dataset.take(1):
-            example = tf.train.Example()
-            example.ParseFromString(raw_record.numpy())
-            print(example)
+        # print('TESTING')
+        # filenames = ['/home/justin/Data/aerial-cars-private/aerial_yolo/fixed_tf_aerial/coco_train.tfrecord-00000-of-00001']  # Replace here
+        # raw_dataset = tf.data.TFRecordDataset(filenames)
+        # for raw_record in raw_dataset.take(1):
+        #     example = tf.train.Example()
+        #     example.ParseFromString(raw_record.numpy())
+        #     print(example)
 
 
         # Configure the model for transfer learning
@@ -247,25 +270,8 @@ def main(args):
         filtered_labels = []
 
         for _, label in val_dataset:
-            img_labels = []
-            # Label has shape [3 scales x[1, grid, grid, 3, 6]]
-            for scale in label:
-                # Shape [1, grid, grid, 3, 6]
-                scale = np.asarray(scale)
-                grid = scale.shape[1]
-
-                scale2 = np.reshape(scale, (3, grid * grid, 6))
-                # Shape: [3, grix*grid, 6]
-
-                for anchor in scale2:
-                    filtered_anchors = []
-                    for box in anchor:
-                        if box[4] > 0:
-                            filtered_anchors.append(np.asarray(box))
-                img_labels.append(filtered_anchors)
-
-            img_labels = np.asarray(img_labels)
-            filtered_labels.append(img_labels)
+            filt_labels = flatten_labels(label)
+            filtered_labels.append(filt_labels)
 
         # i is the num_images index
         # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
@@ -288,7 +294,7 @@ def main(args):
 
         evaluator(predictions, filtered_labels, images)  # Check gts box coords
 
-    if args.valid_imgs:
+    if args.valid_imgs:  # Predictions
 
         # yolo = YoloV3(classes=num_classes)
         yolo = YoloV3(image_size, training=False, classes=num_classes)
@@ -354,63 +360,38 @@ def main(args):
 
             index = index + 1
 
-        if args.visual_data:
-            val_dataset = dataset.load_tfrecord_dataset(valid_path,
-                                                        classes_file,
-                                                        image_size)
-            val_dataset = val_dataset.batch(1)
-            val_dataset = val_dataset.map(lambda x, y: (
-                dataset.transform_images(x, image_size),
-                dataset.transform_targets(y, anchors, anchor_masks, image_size)))
+    if args.visual_data:
+        val_dataset = dataset.load_tfrecord_dataset(valid_path,
+                                                    classes_file,
+                                                    image_size)
+        val_dataset = val_dataset.batch(1)
+        val_dataset = val_dataset.map(lambda x, y: (
+            dataset.transform_images(x, image_size),
+            dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
-            index = 0
-            for img_raw, _label in val_dataset.take(1):
-                print(f'Index {index}')
+        index = 0
+        for img_raw, _label in val_dataset.take(1):
+            print(f'Index {index}')
+            # img = tf.expand_dims(img_raw, 0)
+            img = transform_images(img_raw, image_size)
 
-                # img = tf.expand_dims(img_raw, 0)
-                img = transform_images(img_raw, image_size)
+            output = 'test_images/test_labels_{}.jpg'.format(index)
+            # output = '/Users/justinbutler/Desktop/test/test_images/test_labels_{}.jpg'.format(index)
 
-                output = 'test_images/test_labels_{}.jpg'.format(index)
-                # output = '/Users/justinbutler/Desktop/test/test_images/test_labels_{}.jpg'.format(index)
+            filt_labels = flatten_labels(_label)
 
-                test = []
-                for size in _label:
-                    for grid1 in size:
-                        for grid2 in grid1:
-                            for anchor in grid2:
-                                for a in anchor:
-                                    test.append(a)
+            boxes = tf.expand_dims(filt_labels[:, 0:4], 0)
+            scores = tf.expand_dims(filt_labels[:, 4], 0)
+            classes = tf.expand_dims(filt_labels[:, 5], 0)
+            nums = tf.expand_dims(filt_labels.shape[0], 0)
 
-                # Remove any labels consisting of all 0's
-                filt_labels = []
+            img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+            img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+            img = img * 255
 
-                with open('test.txt', 'w') as txt:
-                    # for img in range(len(full_labels_flat)):
-                    for lab in test:
-                        # [x1,y1,x2,y2,score,class]
-                        txt.write(f'{lab[0]} {lab[1]} {lab[2]} {lab[3]} {lab[4]} {lab[5]}\n')
-                        if lab[4] > 0:
-                            temp = [lab[0],
-                                    lab[1],
-                                    lab[2],
-                                    lab[3],
-                                    lab[4],
-                                    lab[5]]
-                            temp = [float(x) for x in temp]
-                            filt_labels.append(np.asarray(temp))
-                    filt_labels = np.asarray(filt_labels)
+            cv2.imwrite(output, img)
 
-                boxes = tf.expand_dims(filt_labels[:, 0:4], 0)
-                scores = tf.expand_dims(filt_labels[:, 4], 0)
-                classes = tf.expand_dims(filt_labels[:, 5], 0)
-                nums = tf.expand_dims(filt_labels.shape[0], 0)
-
-                img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
-                img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
-                img = img * 255
-                cv2.imwrite(output, img)
-
-                index = index + 1
+            index = index + 1
 
         return
 
