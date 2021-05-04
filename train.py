@@ -31,10 +31,10 @@ def flatten_labels(label):
                 for anchor in grid2:
                     for a in anchor:
                         if a[4] > 0:
-                            temp = [a[0],
-                                    a[1],
-                                    a[2],
-                                    a[3],
+                            temp = [a[0] * cfg.IMAGE_SIZE,
+                                    a[1] * cfg.IMAGE_SIZE,
+                                    a[2] * cfg.IMAGE_SIZE,
+                                    a[3] * cfg.IMAGE_SIZE,
                                     a[4],
                                     a[5]]
                             temp = [float(x) for x in temp]
@@ -301,26 +301,7 @@ def main(args):
 
         print('Validation Image...')
         # Find better way to do this so not requiring manual changes
-        class_dict = {0: 'car', 1: 'bus', 2: 'truck', 3: 'person',
-                      4: 'bicycle', 5: 'motorbike', 6: 'train',
-                      7: 'building', 8: 'traffic light'}
-
-        class_dict = {
-            1: u'car',
-            2: u'bus',
-            3: u'person',
-            4: u'traffic light',
-            5: u'motorbike',
-            6: u'building',
-            7: u'truck',
-            8: u'train',
-        }
-
-        class_dict = {0: 'circle',
-                    1: 'triangle',
-                    2: 'ellipse',
-                    3: 'rectangle',
-                    4: 'square'}
+        class_dict = cfg.CLASS_DICT
 
         class_names = list(class_dict.values())
         print('classes loaded')

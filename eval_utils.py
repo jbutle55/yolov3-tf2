@@ -344,10 +344,12 @@ class Evaluator:
             annotations = gts[iImg]
             # Get the target class labels
             target_labels = []  # Should finish with shape [class, class, ...]
-            for scale in annotations:
-                # print(f'scale: {scale}')
-                # for annot in scale:
-                target_labels.append(scale[-1])
+            # for image in annotations:
+            #     # print(f'scale: {scale}')
+            #     # for annot in scale:
+            #     target_labels.append(scale[-1])
+
+            target_labels = annotations[:, -1]
 
             self.target_classes.append(target_labels)
 
@@ -357,12 +359,13 @@ class Evaluator:
                 target_boxes = []  # Should finish with shape [3 x [x1,y1,x2,y2]]
                 # TODO Shape of target_boxes might be wrong
                 # Get the target bboxes
-                for scale in annotations:
-                    #for annot in scale:
-                    if len(scale):
-                        target_boxes.append(scale[:4])
-                    else:
-                        target_boxes.append([])
+                target_boxes = annotations[:, :4]
+                # for scale in annotations:
+                #     #for annot in scale:
+                #     if len(scale):
+                #         target_boxes.append(scale[:4])
+                #     else:
+                #         target_boxes.append([])
 
                 false_pos_count = 0
                 for iPred, (pred_box, pred_label) in enumerate(zip(pred_boxes, pred_classes)):
@@ -502,9 +505,8 @@ class Evaluator:
 
         print('Average Precisions: ')
         for i, c in enumerate(self.unique_classes):
-            print(f'i: {i}, c: {c}')
-            print('Class {} - AP: {}'.format(class_dict[c+1], self.AP[i+1]))
-            text_file.write('Class {} - AP: {} \n'.format(class_dict[c], self.AP[i]))
+            print('Class {} - AP: {}'.format(class_dict[c+1], self.AP[i]))
+            text_file.write('Class {} - AP: {} \n'.format(class_dict[c+1], self.AP[i]))
             text_file.write('True Positives - {}\n False Positives - {}\n\n'.format(self.true_positives_list,
                                                                                     self.false_positives_list))
 
