@@ -23,11 +23,13 @@ YOLO_TINY_ANCHORS = np.array([(10, 14), (23, 27), (37, 58),
                              np.float32) / 416
 YOLO_TINY_ANCHOR_MASKS = np.array([[3, 4, 5], [0, 1, 2]])
 
-CLASS_DICT = {0: 'circle',
-              1: 'triangle',
-              2: 'ellipse',
-              3: 'rectangle',
-              4: 'square'}
+
+CLASS_DICT = {1: 'circle',
+              2: 'triangle',
+              3: 'ellipse',
+              4: 'rectangle',
+              5: 'square'}
+
 '''
 CLASS_DICT = {
             1: u'car',
@@ -40,6 +42,7 @@ CLASS_DICT = {
             8: u'train',
         }
 '''
+
 
 '''
 CLASS_DICT = {1: u'person',
