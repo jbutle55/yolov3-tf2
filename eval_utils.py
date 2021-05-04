@@ -219,9 +219,12 @@ class Evaluator:
             annotations = gts[iImg]
             # Get the target class labels
             target_labels = []  # Should finish with shape [class, class, ...]
-            for scale in annotations:
-                for annot in scale:
-                    target_labels.append(annot[-1])
+
+            target_labels = annotations[:, -1]
+
+            # for scale in annotations:
+            #     for annot in scale:
+            #         target_labels.append(annot[-1])
 
             unique_classes = Counter(target_labels)
 
@@ -237,12 +240,13 @@ class Evaluator:
                     detected_boxes = []
                     target_boxes = []  # Should finish with shape [3 x [x1,y1,x2,y2]]
                     # Get the target bboxes
-                    for scale in annotations:
-                        for annot in scale:
-                            if len(annot):
-                                target_boxes.append(annot[:4])
-                            else:
-                                target_boxes.append([])
+                    target_boxes = annotations[:, :4]
+                    # for scale in annotations:
+                    #     for annot in scale:
+                    #         if len(annot):
+                    #             target_boxes.append(annot[:4])
+                    #         else:
+                    #             target_boxes.append([])
 
                     for iPred, (pred_box, pred_label) in enumerate(zip(pred_boxes, pred_classes)):
 
