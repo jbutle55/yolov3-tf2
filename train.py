@@ -93,7 +93,6 @@ def main(args):
 
     anchor_masks = cfg.YOLO_ANCHOR_MASKS
 
-
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     for physical_device in physical_devices:
         tf.config.experimental.set_memory_growth(physical_device, True)
@@ -316,6 +315,12 @@ def main(args):
             7: u'truck',
             8: u'train',
         }
+
+        class_dict = {0: 'circle',
+                    1: 'triangle',
+                    2: 'ellipse',
+                    3: 'rectangle',
+                    4: 'square'}
 
         class_names = list(class_dict.values())
         print('classes loaded')
