@@ -122,15 +122,6 @@ def main(args):
             dataset.transform_images(x, image_size),
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
-        # print('TESTING')
-        # filenames = ['/home/justin/Data/aerial-cars-private/aerial_yolo/fixed_tf_aerial/coco_train.tfrecord-00000-of-00001']  # Replace here
-        # raw_dataset = tf.data.TFRecordDataset(filenames)
-        # for raw_record in raw_dataset.take(1):
-        #     example = tf.train.Example()
-        #     example.ParseFromString(raw_record.numpy())
-        #     print(example)
-
-
         # Configure the model for transfer learning
         if transfer == 'none':
             pass  # Nothing to do
@@ -240,6 +231,7 @@ def main(args):
 
     # Calculate mAP
     if args.validate:
+        print('Validating...')
         model = YoloV3(image_size, training=False, classes=num_classes)
         model.load_weights(saved_weights_path).expect_partial()
 
@@ -293,7 +285,7 @@ def main(args):
         evaluator(predictions, filtered_labels, images, roc=False)  # Check gts box coords
 
     if args.valid_imgs:  # Predictions
-
+        print('Valid Images...')
         # yolo = YoloV3(classes=num_classes)
         yolo = YoloV3(image_size, training=False, classes=num_classes)
         yolo.load_weights(saved_weights_path).expect_partial()
@@ -322,7 +314,6 @@ def main(args):
 
             #img = tf.expand_dims(img_raw, 0)
             img = transform_images(img_raw, image_size)
-
             img = img * 255
 
             boxes, scores, classes, nums = yolo(img)
@@ -346,6 +337,7 @@ def main(args):
             index = index + 1
 
     if args.visual_data:
+        print('Visual Data...')
         val_dataset = dataset.load_tfrecord_dataset(valid_path,
                                                     classes_file,
                                                     image_size)
