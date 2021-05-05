@@ -290,7 +290,7 @@ def main(args):
         # Predictions format - [num_imgs x num_preds x [box coords x4, score, classes]]
         # Box coords should be in format x1 y1 x2 y2
 
-        evaluator(predictions, filtered_labels, images)  # Check gts box coords
+        evaluator(predictions, filtered_labels, images, roc=False)  # Check gts box coords
 
     if args.valid_imgs:  # Predictions
 

@@ -31,8 +31,10 @@ class Evaluator:
         self.false_positives_list = []
         self.false_negative_list = []
         self.false_pos_count = []
+        self.true_pos_rate = None
+        self.true_pos_rate = None
 
-    def __call__(self, outputs, ground_truths, debug_images=None):
+    def __call__(self, outputs, ground_truths, debug_images=None, roc=False):
         """
         [Summary]
 
@@ -62,9 +64,12 @@ class Evaluator:
 
         self.display_results()
 
-        tprs, fprs = self.calc_true_negatives(outputs, ground_truths)
+        if roc:
+            tprs, fprs = self.calc_true_negatives(outputs, ground_truths)
+            self.true_pos_rate = tprs
+            self.false_pos_rate = fprs
 
-        self.roc_curve(tprs, fprs)
+            # self.roc_curve(tprs, fprs)
 
         return
 
