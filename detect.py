@@ -21,7 +21,7 @@ physical_devices = tf.config.experimental.list_physical_devices('GPU')
 for physical_device in physical_devices:
     tf.config.experimental.set_memory_growth(physical_device, True)
 
-yolo = YoloV3(classes=num_classes)
+yolo = YoloV3(image_size, training=False, classes=num_classes)
 yolo.load_weights(weights).expect_partial()
 print('weights loaded')
 
