@@ -318,6 +318,17 @@ def main(args):
 
             boxes, scores, classes, nums = yolo(img)
 
+            filt_labels = flatten_labels(_label)
+
+            boxes = tf.expand_dims(filt_labels[:, 0:4], 0)
+            scores = tf.expand_dims(filt_labels[:, 4], 0)
+            classes = tf.expand_dims(filt_labels[:, 5], 0)
+            nums = tf.expand_dims(filt_labels.shape[0], 0)
+
+            img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+            img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+            # img = img * 255
+
             output = 'test_images/test_{}.jpg'.format(index)
             # output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
 
@@ -347,7 +358,7 @@ def main(args):
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
         index = 0
-        for img_raw, _label in val_dataset.take(1):
+        for img_raw, _label in val_dataset.take(5):
             print(f'Index {index}')
             # img = tf.expand_dims(img_raw, 0)
             img = transform_images(img_raw, image_size)
