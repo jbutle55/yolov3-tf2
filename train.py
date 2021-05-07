@@ -216,7 +216,7 @@ def main(args):
                 # EarlyStopping(patience=3, verbose=1),
                 ModelCheckpoint('checkpoints/midpoints/yolov3_train_{epoch}.tf',
                                 verbose=1, save_weights_only=True),
-                TensorBoard(log_dir='logs')
+                TensorBoard(log_dir=f'logs/{saved_weights_path}')
             ]
 
             history = model.fit(train_dataset,
