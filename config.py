@@ -1,20 +1,30 @@
 import numpy as np
 
 YOLO_MAX_BOXES = 300  # Max number of boxes per image
-YOLO_IOU_THRESHOLD = 0.2
-YOLO_SCORE_THRESHOLD = 0.1
+YOLO_IOU_THRESHOLD = 0.5
+YOLO_SCORE_THRESHOLD = 0.4
 
 IMAGE_SIZE = 608
 
 # K-means divided by max width and height. Image size 608
-YOLO_ANCHORS = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
-                         (984, 1140), (1070, 1370)],
-                        np.float32) / 608
+# YOLO_ANCHORS = np.array([(75, 111), (99, 124), (232, 124), (302, 337), (416, 420), (490, 462),  (547, 559),
+#                          (984, 1140), (1070, 1370)],
+#                         np.float32) / 608
 
 # YOLO Paper OG Anchors
-YOLO_ANCHORS = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
-                         (59, 119), (116, 90), (156, 198), (373, 326)],
+# YOLO_ANCHORS = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
+#                          (59, 119), (116, 90), (156, 198), (373, 326)],
+#                         np.float32) / 608
+
+# YOLO Shapes_BW2 Anchors - LARGE
+YOLO_ANCHORS = np.array([(57, 53), (54, 63), (79, 63), (115, 163), (205, 173),
+                         (225, 266), (274, 278), (358, 392), (373, 414)],
                         np.float32) / 608
+
+# # YOLO Shapes_BW2 Anchors - SMALL
+# YOLO_ANCHORS = np.array([(81, 70), (82, 75), (93, 93), (253, 244), (272, 269),
+#                          (287, 306), (451, 459), (462, 466), (463, 480)],
+#                         np.float32) / 608
 
 YOLO_ANCHOR_MASKS = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
 
@@ -29,6 +39,10 @@ CLASS_DICT = {1: 'circle',
               3: 'ellipse',
               4: 'rectangle',
               5: 'square'}
+
+
+# CLASS_DICT = {1: 'square',
+#               2: 'circle'}
 
 '''
 CLASS_DICT = {
