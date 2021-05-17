@@ -75,7 +75,7 @@ def main(args):
 
     num_epochs = args.epochs
     batch_size = args.batch_size
-    learning_rate = 1e-2
+    learning_rate = cfg.LEARNING_RATE
     num_classes = args.num_classes
     # num class for `weights` file if different, useful in transfer learning with different number of classes
     weight_num_classes = args.num_weight_class
