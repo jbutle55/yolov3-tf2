@@ -54,7 +54,7 @@ def main(args):
 
         boxes, scores, classes, nums = yolo(img)
 
-        output = 'test_images/test_{}.jpg'.format(index)
+        output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
         print('output saved to: {}'.format(output))
 
         img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
