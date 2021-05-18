@@ -212,7 +212,7 @@ def main(args):
             model.compile(optimizer=optimizer, loss=loss,
                           run_eagerly=(mode == 'eager_fit'))
             callbacks = [
-                ReduceLROnPlateau(verbose=1),
+                ReduceLROnPlateau(verbose=1, min_lr=1e-4),
                 # EarlyStopping(patience=3, verbose=1),
                 ModelCheckpoint('checkpoints/midpoints/yolov3_train_{epoch}.tf',
                                 verbose=1, save_weights_only=True),
