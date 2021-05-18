@@ -46,8 +46,9 @@ def flatten_labels(label):
 
 def main(args):
     tf.config.experimental.list_physical_devices('GPU')
+    tf.device(f'/gpu:{args.gpu_num}')
 
-    train_path = args.train_dataset
+    train_path = args.train_datasetd
     valid_path = args.valid_dataset
     weights_path = args.weights
     # Path to text? file containing all classes, 1 per line
@@ -404,6 +405,7 @@ if __name__ == "__main__":
                         help='Also the model path for validation if running with no training.')
     parser.add_argument('--output_dir', help='')
     parser.add_argument('--visual_data', action='store_true', default=False)
+    parser.add_argument('--gpu_num', default=0)
 
     args = parser.parse_args()
     main(args)
