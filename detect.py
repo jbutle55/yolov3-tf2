@@ -18,8 +18,7 @@ def main(args):
     image = ''  # Path to input image
     tfrecord = args.dataset  # tfrecord instead of image or None
     output = args.output  # Path to output image
-    num_classes = args.num_classes # Number of classes in model
-
+    num_classes = args.num_classes  # Number of classes in model
 
     anchors = cfg.YOLO_ANCHORS
     anchor_masks = cfg.YOLO_ANCHOR_MASKS
@@ -65,9 +64,10 @@ def main(args):
 
         index = index + 1
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_classes', default='80', type=str)
+    parser.add_argument('--num_classes', default=80, type=int)
     parser.add_argument('--classes', help='path to classes .names file')
     parser.add_argument('--weights', default='checkpoints/yolov3_608.tf')
     parser.add_argument('--dataset', help='path to tfrecord file')
