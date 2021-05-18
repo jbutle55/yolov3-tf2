@@ -67,7 +67,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_classes', default=80)
+    parser.add_argument('--num_classes', default='80', type=str)
     parser.add_argument('--classes', help='path to classes .names file')
     parser.add_argument('--weights', default='checkpoints/yolov3_608.tf')
     parser.add_argument('--dataset', help='path to tfrecord file')
