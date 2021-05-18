@@ -11,6 +11,7 @@ import config as cfg
 import argparse
 # from tensorflow_core.python.keras.models import load_model
 
+
 def main(args):
     class_path = args.classes  # Path to classes file
     weights = args.weights  # Path to weight file
@@ -55,6 +56,7 @@ def main(args):
         boxes, scores, classes, nums = yolo(img)
 
         output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
+        output = '/home/justin/Models/yolov3-tf2/test_images/test_{}.jpg'.format(index)
         print('output saved to: {}'.format(output))
 
         img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
