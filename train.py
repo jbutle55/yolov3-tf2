@@ -46,7 +46,7 @@ def flatten_labels(label):
 
 def main(args):
     tf.config.experimental.list_physical_devices('GPU')
-    tf.device(f'/gpu:{args.gpu_num}')
+    # tf.device(f'/gpu:{args.gpu_num}')
 
     train_path = args.train_dataset
     valid_path = args.valid_dataset
