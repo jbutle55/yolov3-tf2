@@ -48,7 +48,7 @@ def main(args):
     tf.config.experimental.list_physical_devices('GPU')
     tf.device(f'/gpu:{args.gpu_num}')
 
-    train_path = args.train_datasetd
+    train_path = args.train_dataset
     valid_path = args.valid_dataset
     weights_path = args.weights
     # Path to text? file containing all classes, 1 per line
