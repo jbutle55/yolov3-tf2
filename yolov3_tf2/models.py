@@ -21,7 +21,7 @@ from tensorflow.keras.losses import (
 from .utils import broadcast_iou
 import config as cfg
 
-yolo_max_boxes = cfg.YOLO_MAX_BOXES # Max number of boxes per image
+yolo_max_boxes = cfg.YOLO_MAX_BOXES  # Max number of boxes per image
 yolo_iou_threshold = cfg.YOLO_IOU_THRESHOLD
 yolo_score_threshold = cfg.YOLO_SCORE_THRESHOLD
 
@@ -160,6 +160,12 @@ def yolo_boxes(pred, anchors, classes):
 
     box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
         tf.cast(grid_size, tf.float32)
+
+    with open('/Users/justinbutler/Desktop/test/yolo_wh', 'a') as f_out:
+        f_out.write(f'Anchors: {anchors}')
+        for item in box_wh:
+            f_out.write(item)
+
     box_wh = tf.exp(box_wh) * anchors
 
     box_x1y1 = box_xy - box_wh / 2
