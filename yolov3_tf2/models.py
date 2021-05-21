@@ -160,7 +160,7 @@ def yolo_boxes(pred, anchors, classes):
     box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
         tf.cast(grid_size, tf.float32)
 
-    tf.print("Box WH: ", box_wh, (tf.exp(box_wh) * anchors), sep=',',
+    tf.print("Box WH: ", box_wh, sep=',',
              output_stream="file:///home/justin/Models/yolov3-tf2/output_wh.txt")
     # with open('/home/justin/Models/yolov3-tf2/wh_output.txt', 'a') as f_out:
     #     f_out.write(f'Anchors: {anchors}')

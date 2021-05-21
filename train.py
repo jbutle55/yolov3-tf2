@@ -258,6 +258,8 @@ def main(args):
 
         # labels - (N, grid, grid, anchors, [x, y, w, h, obj, class])
         boxes, scores, classes, num_detections = model.predict(val_dataset)
+        print(boxes.shape)
+        print(boxes[0])
         # boxes -> (num_imgs, num_detections, box coords)
 
         filtered_labels = []
