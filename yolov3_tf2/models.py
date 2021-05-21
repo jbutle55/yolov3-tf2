@@ -142,7 +142,6 @@ def YoloOutput(filters, anchors, classes, name=None):
         return tf.keras.Model(inputs, x, name=name)(x_in)
     return yolo_output
 
-@tf.function
 def yolo_boxes(pred, anchors, classes):
     # pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...classes))
     grid_size = tf.shape(pred)[1]
@@ -161,10 +160,11 @@ def yolo_boxes(pred, anchors, classes):
     box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
         tf.cast(grid_size, tf.float32)
 
-    with open('/home/justin/Models/yolov3-tf2/wh_output.txt', 'a') as f_out:
-        f_out.write(f'Anchors: {anchors}')
-        for item in box_wh:
-            f_out.write(item)
+    print(box_wh)
+    # with open('/home/justin/Models/yolov3-tf2/wh_output.txt', 'a') as f_out:
+    #     f_out.write(f'Anchors: {anchors}')
+    #     for item in box_wh:
+    #         f_out.write(item)
 
     box_wh = tf.exp(box_wh) * anchors
 
