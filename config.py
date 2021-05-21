@@ -1,7 +1,7 @@
 import numpy as np
 
 YOLO_MAX_BOXES = 300  # Max number of boxes per image
-YOLO_IOU_THRESHOLD = 0.1
+YOLO_IOU_THRESHOLD = 0.5
 YOLO_SCORE_THRESHOLD = 0.4
 LEARNING_RATE = 1e-2
 
