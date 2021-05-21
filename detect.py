@@ -48,7 +48,7 @@ def main(args):
             open(image, 'rb').read(), channels=3)
 
     index = 0
-    for img_raw, _label in val_dataset.take(5):
+    for img_raw, _label in val_dataset.take(25):
         # img = tf.expand_dims(img_raw, 0)
         img = transform_images(img_raw, image_size)
         img = img * 255
