@@ -142,7 +142,7 @@ def YoloOutput(filters, anchors, classes, name=None):
         return tf.keras.Model(inputs, x, name=name)(x_in)
     return yolo_output
 
-
+@tf.function
 def yolo_boxes(pred, anchors, classes):
     # pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...classes))
     grid_size = tf.shape(pred)[1]
