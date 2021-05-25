@@ -8,10 +8,10 @@ from yolov3_tf2.utils import draw_outputs
 
 import argparse
 
-classes_path = 'aerial.names'
+classes_path = 'coco.names'
 tiny = False
-size = 1024
-num_classes = 8
+size = 608
+num_classes = 80
 output_format = 'XVID'
 # output_format = 'MJPG'
 viz_feat_map = False
