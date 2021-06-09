@@ -2,189 +2,160 @@ import time
 import cv2
 import argparse
 import numpy as np
+from collections import Counter
 
 import yolov3_tf2.dataset as dataset
 from yolov3_tf2.models import YoloV3, YoloLoss, yolo_anchors, yolo_anchor_masks
 from yolov3_tf2.utils import freeze_all, draw_outputs
 from eval_utils import Evaluator
+import config as cfg
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+
+# Flatten all labels and strip labels containing all 0's
+def flatten_labels(label, image_size):
+    filt_labels = []
+
+    # Flatten all labels and remove 0s
+    for size in label:
+        for grid1 in size:
+            for grid2 in grid1:
+                for anchor in grid2:
+                    for a in anchor:
+                        if a[4] > 0:
+                            temp = [a[0] * image_size,
+                                    a[1] * image_size,
+                                    a[2] * image_size,
+                                    a[3] * image_size,
+                                    a[4],
+                                    a[5]]
+                            temp = [float(x) for x in temp]
+                            filt_labels.append(np.asarray(temp))
+    filt_labels = np.asarray(filt_labels)
+
+    return filt_labels
 
 
 def main(args):
 
-    image_size = 416  # 416
-    num_epochs = args.epochs
-    batch_size = args.batch_size
-    learning_rate = 1e-3
-    num_classes = args.num_classes
+    image_size = 608  # 416
+    batch_size = 1
+    num_classes = 80
     # num class for `weights` file if different, useful in transfer learning with different number of classes
-    weight_num_classes = args.num_weight_class
-    valid_path = args.valid_dataset
-    weights_path = args.weights
+    valid_path = '/Users/justinbutler/Desktop/school/Calgary/ML_Work/Datasets/aerial-cars-private/aerial_yolo/train/train.tfrecord'
+    weights_path = 'checkpoints/yolov3_608.tf'
     # Path to text? file containing all classes, 1 per line
-    classes = args.classes
+    classes = 'coco.names'
+    iou = 0.5
 
-    anchors = yolo_anchors
-    anchor_masks = yolo_anchor_masks
+    anchors = cfg.YOLO_ANCHORS
+    anchor_masks = cfg.YOLO_ANCHOR_MASKS
 
     val_dataset = dataset.load_tfrecord_dataset(valid_path,
                                                 classes,
                                                 image_size)
-    val_dataset = val_dataset.batch(batch_size)
+    val_dataset = val_dataset.batch(1)
     val_dataset = val_dataset.map(lambda x, y: (
         dataset.transform_images(x, image_size),
         dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
-    model = YoloV3(image_size, training=True, classes=num_classes)
-    # Darknet transfer is a special case that works
-    # with incompatible number of classes
-    # reset top layers
-    model_pretrained = YoloV3(image_size,
-                              training=True,
-                              classes=weight_num_classes or num_classes)
-    model_pretrained.load_weights(weights_path)
-
-    if transfer == 'darknet':
-        model.get_layer('yolo_darknet').set_weights(
-            model_pretrained.get_layer('yolo_darknet').get_weights())
-        freeze_all(model.get_layer('yolo_darknet'))
-
-    predictions = []
-
-    evaluator = Evaluator(iou_thresh=args.iou)
-
-    # labels - (N, grid, grid, anchors, [x, y, w, h, obj, class])
-    boxes, scores, classes, num_detections = model.predict(val_dataset)
-    # boxes -> (num_imgs, num_detections, box coords)
-
-    # Full labels shape -> [num_batches, grid scale, imgs]
-    # Full labels shape -> [num_batches, [grid, grid, anchors, [x,y,w,h,obj,class]]]
-    full_labels = np.asarray([label for _, label in val_dataset])
-
-    # Shape -> [num_batches, num_imgs_in_batch, 3]
-    # Shape -> [num_batches, num_imgs, 3x[grid,grid,anchors,[x,y,w,h,score,class]]]
-    full_labels_trans = full_labels.transpose(0, 2, 1)
-
-    full_labels_flat = []
-
-    for batch in full_labels_trans:
-        for img in batch:
-            row = []
-            for scale in img:
-                row.append(scale)
-            full_labels_flat.append(row)
-
-    # Shape -> [num_imgs x 3]
-    full_labels_flat = np.asarray(full_labels_flat)
-
-    # Remove any labels consisting of all 0's
-    filt_labels = []
-    # for img in range(len(full_labels_flat)):
-    for img in full_labels_flat:
-        test = []
-        # for scale in full_labels_flat[img]:
-        for scale in img:
-            lab_list = []
-            for g1 in scale:
-                for g2 in g1:
-                    for anchor in g2:
-                        if anchor[0] > 0:
-                            temp = [anchor[0] * image_size,
-                                    anchor[1] * image_size,
-                                    anchor[2] * image_size,
-                                    anchor[3] * image_size,
-                                    anchor[4],
-                                    anchor[5]]
-                            temp = [float(x) for x in temp]
-                            lab_list.append(np.asarray(temp))
-            test.append(np.asarray(lab_list))
-        filt_labels.append(np.asarray(test))
-    filt_labels = np.asarray(filt_labels)  # Numpy array of shape [num_imgs, 3x[num_boxesx[x1,y1,x2,y2,score,class]]]
-    # filt_labels = filt_labels[:, :4] * image_size
-
-    # i is the num_images index
-    # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
-    for img in range(len(num_detections)):
-        row = []
-        for sc in range(len(scores[img])):
-            if scores[img][sc] > 0:
-                row.append(np.hstack([boxes[img][sc] * image_size, scores[img][sc], classes[img][sc]]))
-        predictions.append(np.asarray(row))
-
-    predictions = np.asarray(predictions)  # numpy array of shape [num_imgs x num_preds x 6]
-
-    if len(predictions) == 0:  # No predictions made
-        print('No predictions made - exiting.')
-        exit()
-
-    # predictions[:, :, 0:4] = predictions[:, :, 0:4] * image_size
-    # Predictions format - [num_imgs x num_preds x [box coords x4, score, classes]]
-    # Box coords should be in format x1 y1 x2 y2
-
-    evaluator(predictions, filt_labels, images)  # Check gts box coords
-
+    model = YoloV3(image_size,
+                   training=False,
+                   classes=num_classes)
+    model.load_weights(weights_path)
 
     confidence_thresholds = np.linspace(0.1, 1, 15)
-    confidence_thresholds = [0.5]
+    confidence_thresholds = [0.1, 0.3, 0.5, 0.7]
+    # confidence_thresholds = [0.1]
+
     all_tp_rates = []
     all_fp_rates = []
+
+    evaluator = Evaluator(iou_thresh=iou, test_data=val_dataset)
+
+    class_dict = cfg.CLASS_DICT
+    class_names = list(class_dict.values())
+
+    tp_rates = {}
+    fp_rates = {}
 
     # Compute ROCs for above range of thresholds
     # Compute one for each class vs. the other classes
     for index, conf in enumerate(confidence_thresholds):
+
         tp_of_img = []
         fp_of_img = []
         all_classes = []
 
-        tp_rates = {}
-        fp_rates = {}
+        # tp_rates = {}
+        # fp_rates = {}
 
         boxes, scores, classes, num_detections = model.predict(val_dataset)
 
-        # Full labels shape -> [num_batches, grid scale, imgs]
-        # Full labels shape -> [num_batches, [grid, grid, anchors, [x,y,w,h,obj,class]]]
-        full_labels = np.asarray([label for _, label in val_dataset])
+        visual_preds = False
+        if visual_preds:
 
-        # Shape -> [num_batches, num_imgs_in_batch, 3]
-        # Shape -> [num_batches, num_imgs, 3x[grid,grid,anchors,[x,y,w,h,score,class]]]
-        full_labels_trans = full_labels.transpose(0, 2, 1)
+            index = 0
+            for img_raw, _label in val_dataset.take(5):
+                print(f'Index {index}')
 
-        full_labels_flat = []
+                # img = tf.expand_dims(img_raw, 0)
+                img = dataset.transform_images(img_raw, image_size)
+                img = img * 255
 
-        for batch in full_labels_trans:
-            for img in batch:
-                row = []
-                for scale in img:
-                    row.append(scale)
-                full_labels_flat.append(row)
+                boxes, scores, classes, nums = model(img)
 
-        # Shape -> [num_imgs x 3]
-        full_labels_flat = np.asarray(full_labels_flat)
+                output = 'test_images/test_{}.jpg'.format(index)
+                # output = '/Users/justinbutler/Desktop/test/test_images/test_{}.jpg'.format(index)
 
-        # Remove any labels consisting of all 0's
-        filt_labels = []
-        # for img in range(len(full_labels_flat)):
-        for img in full_labels_flat:
-            test = []
-            # for scale in full_labels_flat[img]:
-            for scale in img:
-                lab_list = []
-                for g1 in scale:
-                    for g2 in g1:
-                        for anchor in g2:
-                            if anchor[0] > 0:
-                                temp = [anchor[0] * image_size,
-                                        anchor[1] * image_size,
-                                        anchor[2] * image_size,
-                                        anchor[3] * image_size,
-                                        anchor[4],
-                                        anchor[5]]
-                                temp = [float(x) for x in temp]
-                                lab_list.append(np.asarray(temp))
-                test.append(np.asarray(lab_list))
-            filt_labels.append(np.asarray(test))
-        filt_labels = np.asarray(
-            filt_labels)  # Numpy array of shape [num_imgs, 3x[num_boxesx[x1,y1,x2,y2,score,class]]]
-        # filt_labels = filt_labels[:, :4] * image_size
+                # print('detections:')
+                # for i in range(nums[index]):
+                #     print('\t{}, {}, {}'.format(class_names[int(classes[index][i])],
+                #                               np.array(scores[index][i]),
+                #                               np.array(boxes[index][i])))
+                #     if i > 10:
+                #         continue
+
+                img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+                img = img * 255
+                cv2.imwrite(output, img)
+
+                index = index + 1
+
+        visual_gts = False
+        if visual_gts:
+            index = 0
+            for img_raw, _label in val_dataset.take(5):
+                print(f'Index {index}')
+                # img = tf.expand_dims(img_raw, 0)
+                img = dataset.transform_images(img_raw, image_size)
+
+                output = 'test_images/test_labels_{}.jpg'.format(index)
+                # output = '/Users/justinbutler/Desktop/test/test_images/test_labels_{}.jpg'.format(index)
+
+                filt_labels = flatten_labels(_label, image_size)
+
+                boxes = tf.expand_dims(filt_labels[:, 0:4], 0)
+                scores = tf.expand_dims(filt_labels[:, 4], 0)
+                classes = tf.expand_dims(filt_labels[:, 5], 0)
+                nums = tf.expand_dims(filt_labels.shape[0], 0)
+
+                img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+                img = img * 255
+
+                cv2.imwrite(output, img)
+
+                index = index + 1
+
+        filtered_labels = []
+        for _, label in val_dataset:
+            filt_labels = flatten_labels(label, image_size)
+            filtered_labels.append(filt_labels)
+
+        predictions = []
 
         # i is the num_images index
         # predictions = [np.hstack([boxes[i][x], scores[i][x], classes[i][x]]) for i in range(len(num_detections)) for x in range(len(scores[i])) if scores[i][x] > 0]
@@ -205,59 +176,28 @@ def main(args):
         # Predictions format - [num_imgs x num_preds x [box coords x4, score, classes]]
         # Box coords should be in format x1 y1 x2 y2
 
-        evaluator(predictions, filt_labels, images)  # Check gts box coords
+        evaluator(predictions, filtered_labels, roc=True)  # Check gts box coords
 
+        tprs = evaluator.true_pos_rate
+        fprs = evaluator.false_pos_rate
 
-        classes = list(set(r['class_ids']))  # All unique class ids
-        for c in classes:
-            if c not in all_classes:
-                all_classes.append(c)
-        complete_classes = dataset_val.class_ids[1:]
-        # Need TPR and FPR rates for each class versus the other classes
-        # Recall == TPR
-        tpr = utils.compute_ap_indiv_class(gt_bbox, gt_class_id, gt_mask,
-                                           r["rois"], r["class_ids"], r["scores"], r['masks'], complete_classes)
-        total_fpr = utils.compute_fpr_indiv_class(gt_bbox, gt_class_id, gt_mask,
-                                                  r["rois"], r["class_ids"], r["scores"], r['masks'],
-                                                  complete_classes)
-        # print(f'For Image: TPR: {tpr} -- FPR: {total_fpr}')
-        tp_of_img.append(tpr)
-        fp_of_img.append(total_fpr)
+        tp_rates[conf] = tprs  # Dict of Dicts
+        fp_rates[conf] = fprs
 
-        all_classes = dataset_val.class_ids[1:]
+    for k in evaluator.classes_counter:
+        tps = []
+        fps = []
+        for conf in confidence_thresholds:
+            tps.append(tp_rates[conf][k])
+            fps.append(fp_rates[conf][k])
 
-        # Need to get average TPR and FPR for number of images used
-        for c in all_classes:
-            tp_s = 0
-            for item in tp_of_img:
-                if c in item.keys():
-                    tp_s += item[c]
-                else:
-                    tp_s += 0
+        print(f'TPS: {tps}, FPS: {fps}')
 
-            tp_rates[c] = tp_s / len(image_ids)
-            # tp_rates[c] = tp_s
-
-        # print(tp_rates)
-
-        for c in all_classes:
-            fp_s = 0
-            for item in fp_of_img:
-                if c in item.keys():
-                    fp_s += item[c]
-                else:
-                    fp_s += 0
-            fp_rates[c] = fp_s / len(image_ids)
-            # fp_rates[c] = fp_s
-
-        all_fp_rates.append(fp_rates)
-        all_tp_rates.append(tp_rates)
-
-    print(f'TP Rates: {all_tp_rates}')
-    print(f'FP Rates: {all_fp_rates}')
-
-    # Plot roc curves
-    # utils.compute_roc_curve(all_tp_rates, all_fp_rates, save_fig=True)
+        plt.plot(tps, fps, 'r+')
+        plt.title(f'ROC - {class_dict[k+1]}')
+        plt.xlabel('True Pos. Rate')
+        plt.ylabel('False Pos Rate')
+        plt.show()
 
 
 if __name__ == '__main__':

@@ -18,6 +18,9 @@ def transform_targets_for_output(y_true, grid_size, anchor_idxs):
     indexes = tf.TensorArray(tf.int32, 1, dynamic_size=True)
     updates = tf.TensorArray(tf.float32, 1, dynamic_size=True)
     idx = 0
+    print('What is N...')
+    print(N)
+
     for i in tf.range(N):
         for j in tf.range(tf.shape(y_true)[1]):
             if tf.equal(y_true[i][j][2], 0):

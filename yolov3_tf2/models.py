@@ -142,13 +142,16 @@ def YoloOutput(filters, anchors, classes, name=None):
         return tf.keras.Model(inputs, x, name=name)(x_in)
     return yolo_output
 
-def yolo_boxes(pred, anchors, classes):
+def yolo_boxes(pred, anchors, classes, xy_out=False):
     # pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...classes))
     grid_size = tf.shape(pred)[1]
     box_xy, box_wh, objectness, class_probs = tf.split(
         pred, (2, 2, 1, classes), axis=-1)
 
     box_xy = tf.sigmoid(box_xy)
+
+    xy_output = box_xy
+
     objectness = tf.sigmoid(objectness)
     class_probs = tf.sigmoid(class_probs)
     pred_box = tf.concat((box_xy, box_wh), axis=-1)  # original xywh for loss
@@ -160,33 +163,35 @@ def yolo_boxes(pred, anchors, classes):
     box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
         tf.cast(grid_size, tf.float32)
 
-    # tf.print("Box WH: ", box_wh, sep=',', output_stream="file:///home/justin/Models/yolov3-tf2/output_wh.txt")
-    # with open('/home/justin/Models/yolov3-tf2/wh_output.txt', 'a') as f_out:
-    #     f_out.write(f'Anchors: {anchors}')
-    #     for item in box_wh:
-    #         f_out.write(item)
-
     box_wh = tf.exp(box_wh) * anchors
 
     box_x1y1 = box_xy - box_wh / 2
     box_x2y2 = box_xy + box_wh / 2
     bbox = tf.concat([box_x1y1, box_x2y2], axis=-1)
 
+    if xy_out:
+        return bbox, objectness, class_probs, xy_output, pred_box
+
     return bbox, objectness, class_probs, pred_box
 
 
-def yolo_nms(outputs, anchors, masks, classes):
+def yolo_nms(outputs, anchors, masks, classes, xy_out=False):
     # boxes, conf, type
     b, c, t = [], [], []
+    xy = []
 
     for o in outputs:
         b.append(tf.reshape(o[0], (tf.shape(o[0])[0], -1, tf.shape(o[0])[-1])))
         c.append(tf.reshape(o[1], (tf.shape(o[1])[0], -1, tf.shape(o[1])[-1])))
         t.append(tf.reshape(o[2], (tf.shape(o[2])[0], -1, tf.shape(o[2])[-1])))
+        if xy_out:
+            xy.append(tf.reshape(o[3], (tf.shape(o[3])[0], -1, tf.shape(o[3])[-1])))
 
     bbox = tf.concat(b, axis=1)
     confidence = tf.concat(c, axis=1)
     class_probs = tf.concat(t, axis=1)
+    if xy_out:
+        xy_set = tf.concat(xy, axis=1)
 
     scores = confidence * class_probs
     boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
@@ -199,11 +204,14 @@ def yolo_nms(outputs, anchors, masks, classes):
         score_threshold=yolo_score_threshold
     )
 
-    return boxes, scores, classes, valid_detections
+    if xy_out:
+        return boxes, scores, classes, valid_detections, xy_set, bbox
+    else:
+        return boxes, scores, classes, valid_detections
 
 
 def YoloV3(size=None, channels=3, anchors=yolo_anchors,
-           masks=yolo_anchor_masks, classes=80, training=False):
+           masks=yolo_anchor_masks, classes=80, training=False, xy_out=False):
     x = inputs = Input([size, size, channels], name='input')
 
     x_36, x_61, x = Darknet(name='yolo_darknet')(x)
@@ -220,17 +228,31 @@ def YoloV3(size=None, channels=3, anchors=yolo_anchors,
     if training:
         return Model(inputs, (output_0, output_1, output_2), name='yolov3')
 
-    boxes_0 = Lambda(lambda x: yolo_boxes(x, anchors[masks[0]], classes),
-                     name='yolo_boxes_0')(output_0)
-    boxes_1 = Lambda(lambda x: yolo_boxes(x, anchors[masks[1]], classes),
-                     name='yolo_boxes_1')(output_1)
-    boxes_2 = Lambda(lambda x: yolo_boxes(x, anchors[masks[2]], classes),
-                     name='yolo_boxes_2')(output_2)
+    if xy_out:
+        boxes_0 = Lambda(lambda x: yolo_boxes(x, anchors[masks[0]], classes, xy_out=True),
+                         name='yolo_boxes_0')(output_0)
+        boxes_1 = Lambda(lambda x: yolo_boxes(x, anchors[masks[1]], classes, xy_out=True),
+                         name='yolo_boxes_1')(output_1)
+        boxes_2 = Lambda(lambda x: yolo_boxes(x, anchors[masks[2]], classes, xy_out=True),
+                         name='yolo_boxes_2')(output_2)
 
-    outputs = Lambda(lambda x: yolo_nms(x, anchors, masks, classes),
-                     name='yolo_nms')((boxes_0[:3], boxes_1[:3], boxes_2[:3]))
+        outputs = Lambda(lambda x: yolo_nms(x, anchors, masks, classes, xy_out=True),
+                         name='yolo_nms')((boxes_0[:4], boxes_1[:4], boxes_2[:4]))
 
-    return Model(inputs, outputs, name='yolov3')
+        return Model(inputs, outputs, name='yolov3')
+
+    else:
+        boxes_0 = Lambda(lambda x: yolo_boxes(x, anchors[masks[0]], classes),
+                         name='yolo_boxes_0')(output_0)
+        boxes_1 = Lambda(lambda x: yolo_boxes(x, anchors[masks[1]], classes),
+                         name='yolo_boxes_1')(output_1)
+        boxes_2 = Lambda(lambda x: yolo_boxes(x, anchors[masks[2]], classes),
+                         name='yolo_boxes_2')(output_2)
+
+        outputs = Lambda(lambda x: yolo_nms(x, anchors, masks, classes),
+                         name='yolo_nms')((boxes_0[:3], boxes_1[:3], boxes_2[:3]))
+
+        return Model(inputs, outputs, name='yolov3')
 
 
 def YoloV3Tiny(size=None, channels=3, anchors=yolo_tiny_anchors,

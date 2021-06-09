@@ -6,6 +6,32 @@ from yolov3_tf2.utils import freeze_all, draw_outputs
 import cv2
 from collections import Counter
 import config as cfg
+import tensorflow as tf
+
+
+# Flatten all labels and strip labels containing all 0's
+def flatten_labels(label, image_size):
+    filt_labels = []
+
+    # Flatten all labels and remove 0s
+    for size in label:
+        for grid1 in size:
+            for grid2 in grid1:
+                for anchor in grid2:
+                    for a in anchor:
+                        if a[4] > 0:
+                            temp = [a[0] * image_size,
+                                    a[1] * image_size,
+                                    a[2] * image_size,
+                                    a[3] * image_size,
+                                    a[4],
+                                    a[5]]
+                            temp = [float(x) for x in temp]
+                            filt_labels.append(np.asarray(temp))
+    filt_labels = np.asarray(filt_labels)
+
+    return filt_labels
+
 
 class Evaluator:
     """
@@ -13,12 +39,14 @@ class Evaluator:
     Adapted from https://github.com/eriklindernoren/PyTorch-YOLOv3/blob/master/utils/utils.py
     """
 
-    def __init__(self, iou_thresh=0.4, conf_thresh=0.5):
+    def __init__(self, iou_thresh=0.4, conf_thresh=0.5, test_data=None, eval_xy=False):
         """
         [summary]
         """
         self.iou_threshold = iou_thresh
         self.confidence_threshold = conf_thresh
+
+        self.dataset = test_data
 
         self.target_classes = []
         self.precision = None
@@ -33,8 +61,10 @@ class Evaluator:
         self.false_pos_count = []
         self.true_pos_rate = None
         self.true_pos_rate = None
+        self.classes_counter = None
+        self.xy_eval = eval_xy
 
-    def __call__(self, outputs, ground_truths, debug_images=None, roc=False):
+    def __call__(self, outputs, ground_truths, debug_images=None, roc=False, xy_data=None):
         """
         [Summary]
 
@@ -51,6 +81,10 @@ class Evaluator:
         # Boxes may already be suppresed during prediction
         # suppressed_preds = self.non_max_suppression(outputs)
         # targets?
+
+        if self.xy_eval:
+            self.eval_xy(xy_data, ground_truths)
+            return
 
         # Pass gts in form [num_imgs x 3 x [img no., class, x1, y1, x2, y2]]
         metrics = self.calc_batch_stats(outputs, ground_truths)
@@ -69,7 +103,7 @@ class Evaluator:
             self.true_pos_rate = tprs
             self.false_pos_rate = fprs
 
-            # self.roc_curve(tprs, fprs)
+            self.roc_curve(tprs, fprs)
 
         return
 
@@ -199,6 +233,11 @@ class Evaluator:
 
     def roc_curve(self, tprsm, fprs):
 
+        # plt.plot(tprsm, fprs, 'r+')
+        # plt.xlabel('True Pos. Rate')
+        # plt.ylabel('False Pos Rate')
+        # plt.show()
+
         return
 
     def calc_true_negatives(self, preds, gts):
@@ -213,8 +252,15 @@ class Evaluator:
 
         unique_classes = None
 
+        unique_classes = Counter(self.target_classes)
+        self.classes_counter = Counter(self.target_classes)
+
         for iImg, outputs in enumerate(preds):
             # Complete loop for each image
+
+            if len(outputs) == 0:
+                # No predictions to evaluate
+                continue
 
             pred_boxes = outputs[:, :4]
             pred_scores = outputs[:, 4]
@@ -227,11 +273,64 @@ class Evaluator:
 
             target_labels = annotations[:, -1]
 
+            # Print Image GTs in Question
+            if self.dataset is not None:
+                img_raw = None
+                gt_labels = None
+                img_count = 0
+
+                for ind_img, lab in self.dataset.take(-1):
+                    img_raw = ind_img
+                    gt_labels = lab
+
+                    if img_count == iImg:
+                        break
+
+                    img_count += 1
+
+                class_names = list(cfg.CLASS_DICT.values())
+
+                filt_labels = flatten_labels(gt_labels, image_size=cfg.IMAGE_SIZE)
+
+                boxes = tf.expand_dims(filt_labels[:, 0:4], 0)
+                scores = tf.expand_dims(filt_labels[:, 4], 0)
+                classes = tf.expand_dims(filt_labels[:, 5], 0)
+                nums = tf.expand_dims(filt_labels.shape[0], 0)
+
+                pred_boxes_d = tf.expand_dims(outputs[:, :4], 0)
+                pred_scores_d = tf.expand_dims(outputs[:, 4], 0)
+                pred_classes_d = tf.expand_dims(outputs[:, 5], 0)
+                pred_nums_d = tf.expand_dims(outputs.shape[0], 0)
+
+                # img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                # img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+
+                output = '/Users/justinbutler/Desktop/test/roc_testing/test_{}.jpg'.format(iImg)
+
+                img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                # Draw GTs
+                # img = draw_outputs(img, (boxes, scores, classes, nums), class_names, thresh=0)
+                # Draw Preds
+                img = draw_outputs(img, (pred_boxes_d, pred_scores_d, pred_classes_d, pred_nums_d), class_names,
+                                   thresh=0.0,
+                                   color=(250, 58, 5))
+                img = img * 255
+                cv2.imwrite(output, img)
+
+                output_gt = '/Users/justinbutler/Desktop/test/roc_testing/test_gt_{}.jpg'.format(iImg)
+
+                img_gt = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+                # Draw GTs
+                img_gt = draw_outputs(img_gt, (boxes, scores, classes, nums), class_names, thresh=0.0)
+
+                img_gt = img_gt * 255
+                cv2.imwrite(output_gt, img_gt)
+
             # for scale in annotations:
             #     for annot in scale:
             #         target_labels.append(annot[-1])
 
-            unique_classes = Counter(target_labels)
+            #unique_classes = Counter(target_labels)
 
             true_positives = 0
             false_positives = 0
@@ -240,6 +339,8 @@ class Evaluator:
 
             if len(annotations):
                 for single_class in unique_classes:
+
+                    # single_class = int(single_class)
                     class_tested.append(single_class)
 
                     detected_boxes = []
@@ -266,29 +367,27 @@ class Evaluator:
                                 if pred_label == target_labels[iBox]:
                                     # Record the prediction as TP
                                     true_positives += 1
+                                    detected_boxes.append(iBox)
 
                                 else:
                                     # False Positive
                                     false_positives += 1
 
+                            # Overlapping boxes but pred of non-target class
                             else:
-                                # Pred label != single class
-                                # Either True or False Negative
+                                # If pred_label matches proper label of box
                                 if pred_label == target_labels[iBox]:
-                                    # True Negative
+                                    # Maybe True Negative
                                     true_negatives += 1
-
                                 else:
                                     # False Negative
                                     false_negatives += 1
 
-                            detected_boxes.append(iBox)
-
-            # Append for each class, for each image
-            true_pos_count.append(true_positives)
-            false_pos_count.append(false_positives)
-            true_neg_count.append(true_negatives)
-            false_neg_count.append(false_negatives)
+                    # Append for each class, for each image
+                    true_pos_count.append(true_positives)
+                    false_pos_count.append(false_positives)
+                    true_neg_count.append(true_negatives)
+                    false_neg_count.append(false_negatives)
 
         tprs = {}
         fprs = {}
@@ -297,10 +396,16 @@ class Evaluator:
         for ind_class in unique_classes:
             # Get indices of when ind_class in class_tested
             indices = [index for index, item in enumerate(class_tested) if item == ind_class]
-            tp_value = sum([true_positives[i] for i in indices])
-            fp_value = sum([false_positives[i] for i in indices])
-            tn_value = sum([true_negatives[i] for i in indices])
-            fn_value = sum([false_negatives[i] for i in indices])
+            indices = class_tested == ind_class
+            tp_value = sum([true_pos_count[id] for id, item in enumerate(indices) if item])
+            fp_value = sum([false_pos_count[id] for id, item in enumerate(indices) if item])
+            tn_value = sum([true_neg_count[id] for id, item in enumerate(indices) if item])
+            fn_value = sum([false_neg_count[id] for id, item in enumerate(indices) if item])
+
+            # tp_value = sum([true_pos_count[i] for i in indices])
+            # fp_value = sum([false_pos_count[i] for i in indices])
+            # tn_value = sum([true_neg_count[i] for i in indices])
+            # fn_value = sum([false_neg_count[i] for i in indices])
 
             if tp_value == 0:
                 tpr = 0
@@ -331,6 +436,7 @@ class Evaluator:
         """
 
         metrics = []
+        self.target_classes = []
 
         for iImg, outputs in enumerate(preds):
             # Complete loop for each image
@@ -358,11 +464,10 @@ class Evaluator:
             #     # for annot in scale:
             #     target_labels.append(scale[-1])
 
-            target_labels = annotations[:, -1]
-
-            self.target_classes.append(target_labels)
-
             if len(annotations):
+                target_labels = annotations[:, -1]
+
+                self.target_classes.append(target_labels)
                 detected_boxes = []
                 detected_classes = []
                 target_boxes = []  # Should finish with shape [3 x [x1,y1,x2,y2]]
@@ -514,6 +619,8 @@ class Evaluator:
 
         print('Average Precisions: ')
         for i, c in enumerate(self.unique_classes):
+            if c < 0:
+                continue
             print('Class {} - AP: {}'.format(class_dict[c+1], self.AP[i]))
             text_file.write('Class {} - AP: {} \n'.format(class_dict[c+1], self.AP[i]))
             text_file.write('True Positives - {}\n False Positives - {}\n\n'.format(self.true_positives_list,
@@ -523,5 +630,40 @@ class Evaluator:
         text_file.write('mAP: {}'.format(self.AP.mean()))
 
         text_file.close()
+
+        return
+
+    def eval_xy(self, xy_data, gts):
+        for iImg, outputs in enumerate(xy_data):
+            # Complete loop for each image
+
+            xy_image = xy_data[iImg]
+
+            if len(outputs) == 0:
+                # No predictions to evaluate
+                continue
+
+            # Get annotations for the image
+            annotations = gts[iImg]
+
+            if len(annotations) == 0:
+                # No groundtruths to compare to
+                target_xy = ([], [])
+            else:
+                target_boxes = annotations[:, :4]  # x1, y1, x2, y2
+
+                # Calc x,y center point
+                widths = abs(target_boxes[:, 2] - target_boxes[:, 0])
+                heights = abs(target_boxes[:, 3] - target_boxes[:, 1])
+
+                target_xy = (target_boxes[:, 0] + (widths / 2), target_boxes[:, 1] + (heights / 2))
+
+                # TODO Calculate "Loss"
+                xy_difference = tf.reduce_sum(target_xy - xy_image)
+
+        plt.scatter(target_xy[0], target_xy[1], marker='o')
+        plt.scatter(xy_image[:, 0], xy_image[:, 1], marker='x')
+        plt.title('Target and Prediction x,y Data')
+        plt.show()
 
         return

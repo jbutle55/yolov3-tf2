@@ -386,6 +386,108 @@ def main(args):
 
         return
 
+    if args.xy:
+        print('Validating XY Output...')
+        model = YoloV3(image_size, training=False, classes=num_classes, xy_out=True)
+        model.load_weights(saved_weights_path).expect_partial()
+
+        batch_size = 1
+
+        val_dataset = dataset.load_tfrecord_dataset(valid_path,
+                                                    classes_file,
+                                                    image_size)
+        val_dataset = val_dataset.batch(batch_size)
+
+        val_dataset = val_dataset.map(lambda x, y: (
+            dataset.transform_images(x, image_size),
+            dataset.transform_targets(y, anchors, anchor_masks, image_size)))
+
+        images = []
+        for img, labs in val_dataset:
+            img = np.squeeze(img)
+            images.append(img)
+
+        predictions = []
+
+        evaluator = Evaluator(iou_thresh=args.iou, eval_xy=True)
+
+        # labels - (N, grid, grid, anchors, [x, y, w, h, obj, class])
+        boxes, scores, classes, num_detections, xy_output, all_boxes = model.predict(val_dataset)
+        # boxes -> (num_imgs, num_detections, box coords)
+
+        check_list = []
+        for index, _ in enumerate(boxes):
+            check_list.append([])
+            for idx, box in enumerate(all_boxes[index]):
+                box[box < 0] = 0.0
+                box[box > 1] = 1.0
+
+                check = all(item in boxes[index] for item in box)
+
+                if check:
+                    check_list[index].append(idx)
+
+        filt_xy = []
+        for img_idx, idx in enumerate(check_list):
+            filt_xy.append(xy_output[img_idx][idx] * cfg.IMAGE_SIZE)
+
+        filtered_labels = []
+        for _, label in val_dataset:
+            filt_labels = flatten_labels(label)
+            filtered_labels.append(filt_labels)
+
+        # i is the num_images index
+        for img in range(len(num_detections)):
+            row = []
+            for sc in range(len(scores[img])):
+                if scores[img][sc] > 0:
+                    row.append(np.hstack([boxes[img][sc] * image_size, scores[img][sc], classes[img][sc], xy_output[img][sc]]))
+            predictions.append(np.asarray(row))
+
+        predictions = np.asarray(predictions)  # numpy array of shape [num_imgs x num_preds x 6]
+
+        if len(predictions) == 0:  # No predictions made
+            print('No predictions made - exiting.')
+            exit()
+
+        evaluator(predictions, filtered_labels, images, roc=False, xy_data=filt_xy)  # Check gts box coords
+
+        index = 0
+        for img_raw, _label in val_dataset.take(5):
+            print(f'Index {index}')
+
+            img = transform_images(img_raw, image_size)
+            img = img * 255
+
+            # boxes, scores, classes, num_detections, xy_output, all_boxes = model.predict(img)
+
+            boxes = tf.expand_dims(filtered_labels[index][:, 0:4], 0)
+            # scores = tf.expand_dims(filtered_labels[index, 4], 0)
+            # classes = tf.expand_dims(filtered_labels[index, 5], 0)
+            # nums = tf.expand_dims(filtered_labels.shape[0], 0)
+
+            widths = abs(boxes[0, :, 2] - boxes[0, :, 0])
+            heights = abs(boxes[0, :, 3] - boxes[0, :, 1])
+
+            target_xy = (np.array(boxes[0, :, 0] + (widths / 2)), np.array(boxes[0, :, 1] + (heights / 2)))
+            predicted_xy = filt_xy[index]
+
+            img = cv2.cvtColor(img_raw[0].numpy(), cv2.COLOR_RGB2BGR)
+            img = img * 255
+
+            for x, y in zip(target_xy[0], target_xy[1]):
+                img = cv2.circle(img, (int(x), int(y)), radius=5, thickness=-10, color=(0, 0, 255))
+
+            for point in predicted_xy:
+                x = int(point[0])
+                y = int(point[1])
+                img = cv2.circle(img, (x, y), radius=5, thickness=-10, color=(255, 0, 0))
+
+            output = '/Users/justinbutler/Desktop/test/test_xy_{}.jpg'.format(index)
+            cv2.imwrite(output, img)
+
+            index += 1
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='')
@@ -408,6 +510,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', help='')
     parser.add_argument('--visual_data', action='store_true', default=False)
     parser.add_argument('--gpu_num', default=0)
+    parser.add_argument('--xy', action='store_true')
 
     args = parser.parse_args()
     main(args)
