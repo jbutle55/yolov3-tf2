@@ -637,6 +637,9 @@ class Evaluator:
         for iImg, outputs in enumerate(xy_data):
             # Complete loop for each image
 
+            # Create empty list for L2 norm (error) values
+            l2_errors = []
+
             xy_image = xy_data[iImg]
 
             if len(outputs) == 0:
@@ -651,6 +654,20 @@ class Evaluator:
                 target_xy = ([], [])
             else:
                 target_boxes = annotations[:, :4]  # x1, y1, x2, y2
+
+                # Create empty list for L2 norm (error) values
+
+                # TODO For each gt point, sort predictions based on L2 norm distance (and class?)
+
+
+                    # TODO After sorting, add shortest distance to error list
+                    # TODO Remove this prediction from list
+
+                    # TODO Repeat for next gt point in image
+
+                # TODO After all gt points and preds, find mean of L2 error
+
+                # TODO Repeat for next image
 
                 # Calc x,y center point
                 widths = abs(target_boxes[:, 2] - target_boxes[:, 0])

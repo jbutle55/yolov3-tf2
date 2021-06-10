@@ -44,6 +44,50 @@ def flatten_labels(label):
     return filt_labels
 
 
+def setup_model(mode, transfer, weights_path):
+    image_size = cfg.IMAGE_SIZE
+    num_classes = cfg.NUM_CLASSES
+    weight_num_classes = cfg.WEIGHT_NUM_CLASSES
+    learning_rate = cfg.LEARNING_RATE
+    anchors = cfg.YOLO_ANCHORS
+    anchor_masks = cfg.YOLO_ANCHOR_MASKS
+
+    model = YoloV3(image_size, training=True, classes=num_classes)
+
+    # Configure the model for transfer learning
+    if transfer == 'none':
+        pass  # Nothing to do
+    elif transfer in ['darknet', 'no_output']:
+        # Darknet transfer is a special case that works
+        # with incompatible number of classes
+        # reset top layers
+        model_pretrained = YoloV3(image_size,
+                                  training=True,
+                                  classes=weight_num_classes or num_classes)
+        model_pretrained.load_weights(weights_path)
+
+        if transfer == 'darknet':
+            model.get_layer('yolo_darknet').set_weights(
+                model_pretrained.get_layer('yolo_darknet').get_weights())
+            freeze_all(model.get_layer('yolo_darknet'))
+
+        elif transfer == 'no_output':
+            for layer in model.layers:
+                if not layer.name.startswith('yolo_output'):
+                    layer.set_weights(model_pretrained.get_layer(
+                        layer.name).get_weights())
+                    freeze_all(layer)
+
+    optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
+    loss = [YoloLoss(anchors[mask], classes=num_classes)
+            for mask in anchor_masks]  # Passing loss as a list might sometimes fail? dict might be better?
+
+    model.compile(optimizer=optimizer, loss=loss,
+                  run_eagerly=(mode == 'eager_fit'))
+
+    return model, optimizer, loss
+
+
 def main(args):
     tf.config.experimental.list_physical_devices('GPU')
     # tf.device(f'/gpu:{args.gpu_num}')
@@ -101,9 +145,7 @@ def main(args):
     if args.no_train:
         print('Skipping training...')
     else:
-        start_time = time.time()
-        model = YoloV3(image_size, training=True, classes=num_classes)
-
+        # Dataset Stuff
         train_dataset = dataset.load_tfrecord_dataset(train_path,
                                                       classes_file,
                                                       image_size)
@@ -123,48 +165,27 @@ def main(args):
             dataset.transform_images(x, image_size),
             dataset.transform_targets(y, anchors, anchor_masks, image_size)))
 
-        # Configure the model for transfer learning
-        if transfer == 'none':
-            pass  # Nothing to do
-        elif transfer in ['darknet', 'no_output']:
-            # Darknet transfer is a special case that works
-            # with incompatible number of classes
-            # reset top layers
-            model_pretrained = YoloV3(image_size,
-                                      training=True,
-                                      classes=weight_num_classes or num_classes)
-            model_pretrained.load_weights(weights_path)
+        # Setup
+        if args.multi_gpu:
+            strategy = tf.distribute.MirroredStrategy()
+            print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-            if transfer == 'darknet':
-                model.get_layer('yolo_darknet').set_weights(
-                    model_pretrained.get_layer('yolo_darknet').get_weights())
-                freeze_all(model.get_layer('yolo_darknet'))
+            BATCH_SIZE = cfg.BATCH_SIZE * strategy.num_replicas_in_sync
 
-            elif transfer == 'no_output':
-                for layer in model.layers:
-                    if not layer.name.startswith('yolo_output'):
-                        layer.set_weights(model_pretrained.get_layer(
-                            layer.name).get_weights())
-                        freeze_all(layer)
-        elif transfer == 'pre':
-            model = YoloV3(image_size,
-                           training=False,
-                           classes=num_classes)
-            model.load_weights(weights_path)
+            cfg.BATCH_SIZE = BATCH_SIZE
 
+            with strategy.scope():
+
+                model, optimizer, loss = setup_model(mode=mode,
+                                                     transfer=transfer,
+                                                     weights_path=weights_path)
         else:
-            # All other transfer require matching classes
-            model.load_weights(weights_path)
-            if transfer == 'fine_tune':
-                # freeze darknet and fine tune other layers
-                darknet = model.get_layer('yolo_darknet')
-                freeze_all(darknet)
-            elif transfer == 'frozen':
-                # freeze everything
-                freeze_all(model)
-        optimizer = tf.keras.optimizers.Adam(lr=learning_rate)
-        loss = [YoloLoss(anchors[mask], classes=num_classes)
-                for mask in anchor_masks]  # Passing loss as a list might sometimes fail? dict might be better?
+            model, optimizer, loss = setup_model(mode=mode,
+                                                 transfer=transfer,
+                                                 weights_path=weights_path)
+
+        # Training
+        start_time = time.time()
 
         if mode == 'eager_tf':
             # Eager mode is great for debugging
@@ -509,8 +530,8 @@ if __name__ == "__main__":
                         help='Also the model path for validation if running with no training.')
     parser.add_argument('--output_dir', help='')
     parser.add_argument('--visual_data', action='store_true', default=False)
-    parser.add_argument('--gpu_num', default=0)
     parser.add_argument('--xy', action='store_true')
+    parser.add_argument('--multi_gpu', action='store_true', default=False)
 
     args = parser.parse_args()
     main(args)
